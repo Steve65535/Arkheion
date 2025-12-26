@@ -1,0 +1,125 @@
+{
+  "description": "FSCA CLI - 链上智能合约集群开发工具",
+  "commands": {
+    "contract": {
+      "description": "智能合约相关命令",
+      "commands": {
+        "deploy": {
+          "description": "部署合约",
+          "handler": "./libs/contract/deploy",
+          "params": {
+            "name": {
+              "type": "string",
+              "required": true,
+              "description": "合约名称"
+            },
+            "network": {
+              "type": "string",
+              "required": false,
+              "description": "网络名称"
+            },
+            "args": {
+              "type": "array",
+              "required": false,
+              "description": "合约构造函数参数"
+            }
+          },
+          "usage": "fsca contract deploy --name MyContract --network mainnet"
+        },
+        "compile": {
+          "description": "编译合约",
+          "handler": "./libs/contract/compile",
+          "params": {
+            "contract": {
+              "type": "string",
+              "required": false,
+              "description": "合约文件路径"
+            },
+            "output": {
+              "type": "string",
+              "required": false,
+              "description": "输出目录"
+            }
+          },
+          "usage": "fsca contract compile --contract ./contracts/MyContract.sol"
+        },
+        "call": {
+          "description": "调用合约方法",
+          "handler": "./libs/contract/call",
+          "params": {
+            "address": {
+              "type": "string",
+              "required": true,
+              "description": "合约地址"
+            },
+            "method": {
+              "type": "string",
+              "required": true,
+              "description": "方法名"
+            },
+            "args": {
+              "type": "array",
+              "required": false,
+              "description": "方法参数"
+            }
+          },
+          "usage": "fsca contract call --address 0x... --method getBalance"
+        }
+      }
+    },
+    "chain": {
+      "description": "链相关命令",
+      "commands": {
+        "info": {
+          "description": "显示链信息",
+          "handler": "./libs/chain/info",
+          "usage": "fsca chain info"
+        },
+        "balance": {
+          "description": "查询余额",
+          "handler": "./libs/chain/balance",
+          "params": {
+            "address": {
+              "type": "string",
+              "required": true,
+              "description": "地址"
+            }
+          },
+          "usage": "fsca chain balance --address 0x..."
+        }
+      }
+    },
+    "wallet": {
+      "description": "钱包相关命令",
+      "commands": {
+        "create": {
+          "description": "创建新钱包",
+          "handler": "./libs/wallet/create",
+          "usage": "fsca wallet create"
+        },
+        "import": {
+          "description": "导入钱包",
+          "handler": "./libs/wallet/import",
+          "params": {
+            "privateKey": {
+              "type": "string",
+              "required": true,
+              "description": "私钥"
+            }
+          },
+          "usage": "fsca wallet import --privateKey 0x..."
+        }
+      }
+    },
+    "init": {
+      "description": "初始化 FSCA 项目",
+      "handler": "./libs/init",
+      "usage": "fsca init"
+    },
+    "version": {
+      "description": "显示版本信息",
+      "handler": "./libs/version",
+      "usage": "fsca version"
+    }
+  }
+}

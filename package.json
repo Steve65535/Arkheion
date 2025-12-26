@@ -1,0 +1,17 @@
+{
+  "name": "fsca-cli",
+  "version": "1.0.0",
+  "description": "FSCA CLI - 链上智能合约集群开发工具",
+  "main": "cli/index.js",
+  "bin": {
+    "fsca": "./cli/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["cli", "fsca", "blockchain", "tools", "smart-contracts"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {}
+}
