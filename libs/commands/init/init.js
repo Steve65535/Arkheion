@@ -115,6 +115,91 @@ module.exports = {
   fs.writeFileSync(hardhatConfigPath, hardhatConfig, 'utf-8');
   console.log('Created basic hardhat.config.js');
 }
+/**
+ * 递归复制目录
+ * @param {string} srcDir - 源目录
+ * @param {string} destDir - 目标目录
+ * @param {string} filterExt - 文件扩展名过滤（如 '.sol'）
+ */
+function copyDirectory(srcDir, destDir, filterExt = null) {
+  if (!fs.existsSync(srcDir)) {
+    throw new Error(`Source directory does not exist: ${srcDir}`);
+  }
+
+  // 创建目标目录
+  if (!fs.existsSync(destDir)) {
+    fs.mkdirSync(destDir, { recursive: true });
+  }
+
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+
+    if (entry.isDirectory()) {
+      // 递归复制子目录
+      copyDirectory(srcPath, destPath, filterExt);
+    } else if (entry.isFile()) {
+      // 如果指定了文件扩展名过滤，只复制匹配的文件
+      if (filterExt && !entry.name.endsWith(filterExt)) {
+        continue;
+      }
+      // 复制文件
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+/**
+ * 加载 fsca-core 合约文件到项目
+ * @param {string} rootDir - 项目根目录
+ */
+function loadFscaCoreFiles(rootDir) {
+  console.log('Loading FSCA core contracts...');
+  
+  // 获取 fsca-core 的路径（相对于当前文件）
+  // init.js 在 libs/commands/init/init.js
+  // fsca-core 在 libs/fsca-core
+  const currentFileDir = __dirname; // libs/commands/init
+  const fscaCorePath = path.resolve(currentFileDir, '../../fsca-core');
+  
+  if (!fs.existsSync(fscaCorePath)) {
+    console.warn(`Warning: FSCA core directory not found at ${fscaCorePath}`);
+    console.warn('Skipping FSCA core contracts copy.');
+    return;
+  }
+
+  // 目标目录：contracts/undeployed
+  const contractsDir = path.join(rootDir, 'contracts');
+  const undeployedDir = path.join(contractsDir, 'undeployed');
+  const deployedDir = path.join(contractsDir, 'deployed');
+
+  // 确保 contracts 目录存在
+  if (!fs.existsSync(contractsDir)) {
+    fs.mkdirSync(contractsDir, { recursive: true });
+  }
+
+  // 创建 deployed 和 undeployed 文件夹
+  if (!fs.existsSync(deployedDir)) {
+    fs.mkdirSync(deployedDir, { recursive: true });
+    console.log('Created contracts/deployed directory');
+  }
+
+  if (!fs.existsSync(undeployedDir)) {
+    fs.mkdirSync(undeployedDir, { recursive: true });
+    console.log('Created contracts/undeployed directory');
+  }
+
+  // 复制所有 .sol 文件到 undeployed 目录，保持目录结构
+  try {
+    copyDirectory(fscaCorePath, undeployedDir, '.sol');
+    console.log('✓ Copied FSCA core contracts to contracts/undeployed');
+  } catch (error) {
+    console.error('Failed to copy FSCA core contracts:', error.message);
+    throw error;
+  }
+}
 
 /**
  * 提示用户输入配置信息
@@ -319,10 +404,13 @@ module.exports = async function init({ rootDir, args = {} }) {
     // 3. 初始化 hardhat 项目
     await initHardhat(rootDir);
     
-    // 4. 引导用户配置基本参数
+    // 4. 加载 FSCA core 合约文件
+    loadFscaCoreFiles(rootDir);
+    
+    // 5. 引导用户配置基本参数
     const userConfig = await promptForConfig(args);
     
-    // 5. 创建全局配置文件 project.json
+    // 6. 创建全局配置文件 project.json
     createProjectConfig(rootDir, userConfig);
     
     console.log('');

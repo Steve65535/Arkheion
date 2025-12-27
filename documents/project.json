@@ -17,12 +17,9 @@
       "retry": 3
     },
     "fsca": {
-      "registry": "./configs/pods.json",
-      "artifactsPath": "./artifacts",
-      "deploymentsPath": "./deployments",
-      "activePods": ["bank", "governance"],
-      "passivePods": ["vault", "credit"],
-      "descriptionMap": "./configs/descriptionName.json"
+        "clusterAddress":"0x",
+        "multisigAddress":"0x",
+        "operatorAddress":"0x"
     },
     "security": {
       "signMode": "local",              
