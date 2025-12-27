@@ -1,0 +1,38 @@
+{
+    "network": {
+      "name": "localnet",
+      "rpc": "http://127.0.0.1:8545",
+      "chainId": 1337,
+      "blockConfirmations": 1
+    },
+    "account": {
+      "privateKey": "0xabc...",
+      "address": "0x123...",
+      "mnemonic": "",
+      "keyStorePath": "./configs/keystore.json"
+    },
+    "provider": {
+      "type": "http",
+      "timeout": 10000,
+      "retry": 3
+    },
+    "fsca": {
+      "registry": "./configs/pods.json",
+      "artifactsPath": "./artifacts",
+      "deploymentsPath": "./deployments",
+      "activePods": ["bank", "governance"],
+      "passivePods": ["vault", "credit"],
+      "descriptionMap": "./configs/descriptionName.json"
+    },
+    "security": {
+      "signMode": "local",              
+      "encryption": "aes256",          
+      "accessControlContract": "0xAC...EF"
+    },
+    "system": {
+      "logLevel": "info",               
+      "cachePath": "./.cache",
+      "tempPath": "./.tmp",
+      "autoUpdate": false
+    }
+  }
