@@ -81,23 +81,35 @@ module.exports = async function unlink({ rootDir, args = {} }) {
             console.warn(`Warning: Could not check wetherMounted. Assuming 0. ${e.message}`);
         }
 
-        if (isMounted == 0) {
-            throw new Error("Cannot unlink via ClusterManager if contract is NOT mounted. Use direct contract calls or wait until mounted.");
-        }
+
+        // if (isMounted == 0) {
+        //     throw new Error("Cannot unlink via ClusterManager if contract is NOT mounted. Use direct contract calls or wait until mounted.");
+        // }
 
         console.log(`Unlinking ${type} pod...`);
         console.log(`  Source: ${currentOperating}`);
         console.log(`  Target: ${targetAddress} (ID: ${tId})`);
+        console.log(`  Status: ${isMounted == 1 ? 'Mounted' : 'Unmounted (Before Mount)'}`);
 
         const clusterAddr = config.fsca.clusterAddress;
         const clusterAbi = loadClusterManagerABI(rootDir);
         const clusterContract = new ethers.Contract(clusterAddr, clusterAbi, signer);
 
         let tx;
-        if (type === 'positive') {
-            tx = await clusterContract.removeActivePodAfterMount(currentOperating, targetAddress, tId);
+        if (isMounted == 1) {
+            // After Mount
+            if (type === 'positive') {
+                tx = await clusterContract.removeActivePodAfterMount(currentOperating, targetAddress, tId);
+            } else {
+                tx = await clusterContract.removePassivePodAfterMount(currentOperating, targetAddress, tId);
+            }
         } else {
-            tx = await clusterContract.removePassivePodAfterMount(currentOperating, targetAddress, tId);
+            // Before Mount
+            if (type === 'positive') {
+                tx = await clusterContract.removeActivePodBeforeMount(currentOperating, targetAddress, tId);
+            } else {
+                tx = await clusterContract.removePassivePodBeforeMount(currentOperating, targetAddress, tId);
+            }
         }
 
         console.log(`Transaction sent: ${tx.hash}`);

@@ -62,6 +62,19 @@ contract ClusterManager is NoReentryGuard{
         normalTemplate source=normalTemplate(sourceAddr);
         source.addPassiveModule(targetId,targetAddr);
     }
+
+    function removeActivePodBeforeMount(address sourceAddr, address targetAddr, uint32 targetId) external onlyOperator {
+        // Explicitly check target address matches ID if needed, though remove logic primarily uses ID
+        require(addrToId[targetAddr] == targetId, "target id and addr dismatch");
+        normalTemplate source = normalTemplate(sourceAddr);
+        source.removeActiveModule(targetId);
+    }
+
+    function removePassivePodBeforeMount(address sourceAddr, address targetAddr, uint32 targetId) external onlyOperator {
+        require(addrToId[targetAddr] == targetId, "target id and addr dismatch");
+        normalTemplate source = normalTemplate(sourceAddr);
+        source.removePassiveModule(targetId);
+    }
     function addActivePodAfterMount(address sourceAddr, address targetAddr, uint32 targetId) external onlyOperator {
         require(addrToId[targetAddr] == targetId, "target id and addr dismatch");
         uint8 pod = 1;
