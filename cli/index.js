@@ -24,7 +24,7 @@ const args = process.argv.slice(2);
 
 // 处理帮助命令
 if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
-  logger.printTitle(require('../package.json').version);
+  // logger.printTitle(require('../package.json').version);
   console.log(parser.getHelp());
   console.log('\nUse "fsca <command> --help" for more information about a command.');
   process.exit(0);

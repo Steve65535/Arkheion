@@ -65,6 +65,11 @@
             }
           }
         },
+        "graph": {
+          "description": "生成集群拓扑图 (Mermaid)",
+          "handler": "./libs/commands/cluster/graph",
+          "usage": "fsca cluster graph"
+        },
         "list": {
           "description": "列举全局合约集群",
           "commands": {

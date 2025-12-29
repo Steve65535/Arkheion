@@ -18,26 +18,6 @@ const COLORS = {
     bold: '\x1b[1m'
 };
 
-const ASCII_TITLE = `
-  ███████╗███████╗ ██████╗ █████╗       ██████╗██╗     ██╗
-  ██╔════╝██╔════╝██╔════╝██╔══██╗     ██╔════╝██║     ██║
-  █████╗  ███████╗██║     ███████║     ██║     ██║     ██║
-  ██╔══╝  ╚════██║██║     ██╔══██║     ██║     ██║     ██║
-  ██║     ███████║╚██████╗██║  ██║     ╚██████╗███████╗██║
-  ╚═╝     ╚══════╝ ╚═════╝╚═╝  ╚═╝      ╚═════╝╚══════╝╚═╝
-`;
-
-/**
- * Prints the FSCA CLI title in Bright Purple.
- * @param {string} version - Optional version string to display
- */
-function printTitle(version = '') {
-    console.log(`${COLORS.brightPurple}${ASCII_TITLE}${COLORS.reset}`);
-    if (version) {
-        console.log(`${COLORS.brightPurple}  Financial Smart Contract Architecture CLI v${version}${COLORS.reset}\n`);
-    }
-}
-
 /**
  * Logs the command line being executed in Bright Blue.
  * @param {string} command - The command string
@@ -76,7 +56,6 @@ function logInteraction(command, input, result) {
 
 module.exports = {
     COLORS,
-    printTitle,
     logCommand,
     logInput,
     logResult,
