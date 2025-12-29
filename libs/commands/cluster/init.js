@@ -141,17 +141,55 @@ module.exports = async function clusterInit({ rootDir, args = {} }) {
       try {
         execSync('npx hardhat compile', { cwd: rootDir, stdio: 'inherit' });
       } catch (error) {
-        // Check if the error is due to missing "type": "module"
-        // Since stdio is inherit, we can't easily capture output here, but we can infer from the user report
-        // OR we can try to run the fix blindly if it failed, or assume it's the common error if we are in this context.
-        // A safer approach: check if package.json misses type: module and hardhat.config.js exists.
-
+        // Check if the error is due to missing "type": "module" or missing peer dependencies
         console.warn('Compilation failed. Attempting to fix common issues...');
 
-        // Try to fix "Hardhat only supports ESM projects" error
         try {
-          console.log('Setting "type": "module" in package.json...');
-          execSync('npm pkg set type="module"', { cwd: rootDir, stdio: 'inherit' });
+          // Fix 2 & 3: Force install compatible versions of Hardhat (v2), Toolbox, and Ethers.
+          console.log('Detected Hardhat/Dependency issues. Applying comprehensive fix...');
+
+          // Step A: Fix Solidity Version in hardhat.config.js (or .ts) if exists
+          const configFiles = ['hardhat.config.js', 'hardhat.config.cjs', 'hardhat.config.ts'];
+          for (const file of configFiles) {
+            const configPath = path.join(rootDir, file);
+            if (fs.existsSync(configPath)) {
+              let content = fs.readFileSync(configPath, 'utf-8');
+              // Replace solidity version with 0.8.24
+              if (content.includes('solidity:')) {
+                content = content.replace(/solidity:\s*["'][\^]?\d+\.\d+\.\d+["']/, 'solidity: "0.8.24"');
+                fs.writeFileSync(configPath, content, 'utf-8');
+                console.log(`✓ Updated ${file} solidity version to 0.8.24`);
+              }
+            }
+          }
+
+          console.log('Installing dependencies (Hardhat v2 + Toolbox + Peers)...');
+          console.log('This ensures all plugins are correctly installed.');
+
+          // Install everything required by hardhat-toolbox + stable hardhat core
+          const deps = [
+            'hardhat@^2.22.5',
+            '@nomicfoundation/hardhat-toolbox@^5.0.0',
+            'ethers@^6.4.0',
+            '@nomicfoundation/hardhat-chai-matchers@^2.0.0',
+            '@nomicfoundation/hardhat-ethers@^3.0.0',
+            '@nomicfoundation/hardhat-ignition-ethers@^0.15.0',
+            '@nomicfoundation/hardhat-network-helpers@^1.0.0',
+            '@nomicfoundation/hardhat-verify@^2.0.0',
+            '@typechain/ethers-v6@^0.5.0',
+            '@typechain/hardhat@^9.0.0',
+            '@types/chai@^4.2.0',
+            '@types/mocha@>=9.1.0',
+            'chai@^4.2.0',
+            'hardhat-gas-reporter@^1.0.8',
+            'solidity-coverage@^0.8.1',
+            'ts-node@>=8.0.0',
+            'typechain@^8.3.0',
+            'typescript@>=4.5.0'
+          ];
+
+          execSync(`npm install --save-dev ${deps.join(' ')}`, { cwd: rootDir, stdio: 'inherit' });
+
           console.log('Retrying compilation...');
           execSync('npx hardhat compile', { cwd: rootDir, stdio: 'inherit' });
         } catch (retryError) {

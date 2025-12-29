@@ -44,7 +44,7 @@ async function installHardhat(rootDir) {
 
     // 安装 hardhat 和依赖
     console.log('Installing hardhat and dependencies...');
-    execSync('npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox', {
+    execSync('npm install --save-dev hardhat@^2.26.0 @nomicfoundation/hardhat-toolbox@^5.0.0 ethers@^6.4.0', {
       cwd: rootDir,
       stdio: 'inherit'
     });
@@ -109,7 +109,7 @@ function createBasicHardhatConfig(rootDir) {
 
 /** @type import('hardhat/config').HardhatUserConfig */
 export default {
-  solidity: "0.8.19",
+  solidity: "0.8.24",
   networks: {
     localnet: {
       url: "http://127.0.0.1:8545",
