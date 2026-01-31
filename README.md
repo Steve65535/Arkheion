@@ -90,8 +90,16 @@ fsca cluster unlink <TYPE> <TARGET_ADDRESS> <TARGET_ID>
 *   `fsca cluster choose <address>`: 选择当前操作的合约上下文。
 *   `fsca cluster link <type> <addr> <id>`: 链接模块 (type: `positive` | `passive`)。
 *   `fsca cluster unlink <type> <addr> <id>`: 解除链接。
+*   `fsca cluster info <id>`: 查询合约详情 (By ID)。
+*   `fsca cluster operator list`: 列出集群管理员。
+*   `fsca cluster operator add/remove <address>`: 管理集群管理员。
 *   `fsca cluster mount <id> <name>`: 挂载合约到集群。
 *   `fsca cluster unmount <id>`: 从集群卸载合约。
+
+### 权限与模块管理 (`fsca normal`)
+*   `fsca normal right set <abiId> <level>`: 设置合约 ABI 调用权限 (通过 ClusterManager)。
+*   `fsca normal right remove <abiId>`: 移除合约 ABI 权限。
+*   `fsca normal get modules <type>`: 查询合约已链接的模块 (type: `active` | `passive`)。
 
 ## 目录结构
 

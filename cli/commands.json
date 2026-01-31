@@ -85,6 +85,52 @@
             }
           }
         },
+        "info": {
+          "description": "查询集群合约详情 (by ID)",
+          "handler": "./libs/commands/cluster/info",
+          "usage": "fsca cluster info <id>",
+          "params": {
+            "id": {
+              "type": "number",
+              "required": true,
+              "description": "合约ID"
+            }
+          }
+        },
+        "operator": {
+          "description": "管理集群管理员 (Operator)",
+          "commands": {
+            "list": {
+              "description": "列出所有 Operator",
+              "handler": "./libs/commands/cluster/operator",
+              "usage": "fsca cluster operator list"
+            },
+            "add": {
+              "description": "添加 Operator",
+              "handler": "./libs/commands/cluster/operator",
+              "usage": "fsca cluster operator add <address>",
+              "params": {
+                "address": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Operator 地址"
+                }
+              }
+            },
+            "remove": {
+              "description": "移除 Operator",
+              "handler": "./libs/commands/cluster/operator",
+              "usage": "fsca cluster operator remove <address>",
+              "params": {
+                "address": {
+                  "type": "string",
+                  "required": true,
+                  "description": "Operator 地址"
+                }
+              }
+            }
+          }
+        },
         "choose": {
           "description": "选择当前操作的合约",
           "handler": "./libs/commands/cluster/choose",
@@ -167,6 +213,62 @@
               "type": "number",
               "required": true,
               "description": "要卸载的合约ID"
+            }
+          }
+        }
+      }
+    },
+    "normal": {
+      "description": "标准合约(NormalTemplate)相关命令",
+      "commands": {
+        "right": {
+          "description": "管理合约 ABI 权限 (通过 ClusterManager)",
+          "commands": {
+            "set": {
+              "description": "设置 ABI 权限等级",
+              "handler": "./libs/commands/normal/right",
+              "usage": "fsca normal right set <abiId> <maxRight>",
+              "params": {
+                "abiId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "ABI ID/Hash"
+                },
+                "maxRight": {
+                  "type": "string",
+                  "required": true,
+                  "description": "最大权限等级 (整数)"
+                }
+              }
+            },
+            "remove": {
+              "description": "移除 ABI 权限",
+              "handler": "./libs/commands/normal/right",
+              "usage": "fsca normal right remove <abiId>",
+              "params": {
+                "abiId": {
+                  "type": "string",
+                  "required": true,
+                  "description": "ABI ID/Hash"
+                }
+              }
+            }
+          }
+        },
+        "get": {
+          "description": "查询合约信息",
+          "commands": {
+            "modules": {
+              "description": "获取已链接的模块",
+              "handler": "./libs/commands/normal/get",
+              "usage": "fsca normal get modules <type>",
+              "params": {
+                "type": {
+                  "type": "string",
+                  "required": true,
+                  "description": "active 或 passive"
+                }
+              }
             }
           }
         }

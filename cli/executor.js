@@ -56,6 +56,7 @@ class CommandExecutor {
           args: parsedCommand.args,
           subcommands: parsedCommand.subcommands,
           config: parsedCommand.config,
+          commandName: parsedCommand.command, // Added command name context
           rootDir
         });
       } else if (handler && typeof handler.default === 'function') {
@@ -63,6 +64,7 @@ class CommandExecutor {
           args: parsedCommand.args,
           subcommands: parsedCommand.subcommands,
           config: parsedCommand.config,
+          commandName: parsedCommand.command, // Added command name context
           rootDir
         });
       } else {
