@@ -101,8 +101,21 @@ module.exports = async function deploy({ rootDir, args = {} }) {
 
         console.log(`✓ Contract deployed at: ${deployedAddress}`);
 
-        // 5. Update Cache
+        // 5. Archive deployed contract
         const timestamp = Math.floor(Date.now() / 1000);
+        const dateStr = new Date(timestamp * 1000).toISOString().replace(/[:.]/g, '-').slice(0, -5);
+
+        archiveDeployedContract(rootDir, {
+            name: description,
+            address: deployedAddress,
+            timestamp: timestamp,
+            dateStr: dateStr,
+            txHash: contract.deploymentTransaction().hash,
+            cluster: config.fsca.clusterAddress,
+            network: config.network.name
+        });
+
+        // 6. Update Cache
         const contractData = {
             name: description,
             address: deployedAddress,
@@ -129,3 +142,77 @@ module.exports = async function deploy({ rootDir, args = {} }) {
         process.exit(1);
     }
 };
+
+/**
+ * 归档已部署的合约
+ * 将合约源码复制到 deployed 目录,并添加元数据
+ */
+function archiveDeployedContract(rootDir, metadata) {
+    const { name, address, timestamp, dateStr, txHash, cluster, network } = metadata;
+
+    // 源文件路径 (normaltemplate.sol)
+    const sourcePath = path.join(rootDir, 'contracts', 'undeployed', 'lib', 'normaltemplate.sol');
+
+    // 目标目录
+    const deployedDir = path.join(rootDir, 'contracts', 'deployed');
+    if (!fs.existsSync(deployedDir)) {
+        fs.mkdirSync(deployedDir, { recursive: true });
+    }
+
+    // 目标文件名: normaltemplate_MyPod_2026-02-03T13-00-00.sol
+    const sanitizedName = name.replace(/[^a-zA-Z0-9]/g, '_');
+    const targetFileName = `normaltemplate_${sanitizedName}_${dateStr}.sol`;
+    const targetPath = path.join(deployedDir, targetFileName);
+
+    // 读取源文件
+    if (!fs.existsSync(sourcePath)) {
+        console.warn(`⚠️  Source file not found: ${sourcePath}`);
+        return;
+    }
+
+    const sourceContent = fs.readFileSync(sourcePath, 'utf-8');
+
+    // 添加元数据注释
+    const metadataComment = `/**
+ * FSCA Deployed Contract Archive
+ * 
+ * Contract Name: ${name}
+ * Deployed Address: ${address}
+ * Deploy Transaction: ${txHash}
+ * Cluster Address: ${cluster}
+ * Network: ${network}
+ * Deploy Timestamp: ${timestamp}
+ * Deploy Date: ${new Date(timestamp * 1000).toISOString()}
+ * 
+ * This file is an archived copy of the deployed contract.
+ * DO NOT modify this file. For new deployments, use contracts/undeployed/
+ */
+
+`;
+
+    const archivedContent = metadataComment + sourceContent;
+
+    // 写入目标文件
+    fs.writeFileSync(targetPath, archivedContent, 'utf-8');
+
+    // 同时保存 JSON 元数据
+    const metadataPath = path.join(deployedDir, `${sanitizedName}_${dateStr}.json`);
+    const metadataJson = {
+        name,
+        address,
+        deployTx: txHash,
+        cluster,
+        network,
+        timestamp,
+        deployDate: new Date(timestamp * 1000).toISOString(),
+        sourceFile: targetFileName,
+        compiler: 'hardhat',
+        template: 'normaltemplate.sol'
+    };
+
+    fs.writeFileSync(metadataPath, JSON.stringify(metadataJson, null, 2), 'utf-8');
+
+    console.log(`✓ Archived to: ${path.relative(rootDir, targetPath)}`);
+    console.log(`✓ Metadata saved: ${path.relative(rootDir, metadataPath)}`);
+}
+
