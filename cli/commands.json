@@ -50,6 +50,139 @@
         }
       }
     },
+    "wallet": {
+      "description": "管理 MultiSig 钱包",
+      "commands": {
+        "submit": {
+          "description": "提交新交易到多签钱包",
+          "handler": "./libs/commands/wallet/submit",
+          "usage": "fsca wallet submit --to <address> --value <amount> --data <hex>",
+          "params": {
+            "to": {
+              "type": "string",
+              "required": true,
+              "description": "目标合约地址"
+            },
+            "value": {
+              "type": "string",
+              "required": false,
+              "description": "发送的 ETH 数量 (默认 0)"
+            },
+            "data": {
+              "type": "string",
+              "required": true,
+              "description": "调用数据 (ABI 编码的 hex)"
+            }
+          }
+        },
+        "confirm": {
+          "description": "确认待处理的交易",
+          "handler": "./libs/commands/wallet/confirm",
+          "usage": "fsca wallet confirm <txIndex>",
+          "params": {
+            "txIndex": {
+              "type": "number",
+              "required": true,
+              "description": "交易索引"
+            }
+          }
+        },
+        "execute": {
+          "description": "执行已达到阈值的交易",
+          "handler": "./libs/commands/wallet/execute",
+          "usage": "fsca wallet execute <txIndex>",
+          "params": {
+            "txIndex": {
+              "type": "number",
+              "required": true,
+              "description": "交易索引"
+            }
+          }
+        },
+        "revoke": {
+          "description": "撤销之前的确认",
+          "handler": "./libs/commands/wallet/revoke",
+          "usage": "fsca wallet revoke <txIndex>",
+          "params": {
+            "txIndex": {
+              "type": "number",
+              "required": true,
+              "description": "交易索引"
+            }
+          }
+        },
+        "list": {
+          "description": "列出所有交易",
+          "handler": "./libs/commands/wallet/list",
+          "usage": "fsca wallet list [--pending]",
+          "params": {
+            "pending": {
+              "type": "boolean",
+              "required": false,
+              "description": "仅显示待处理的交易"
+            }
+          }
+        },
+        "info": {
+          "description": "查看交易详情",
+          "handler": "./libs/commands/wallet/info",
+          "usage": "fsca wallet info <txIndex>",
+          "params": {
+            "txIndex": {
+              "type": "number",
+              "required": true,
+              "description": "交易索引"
+            }
+          }
+        },
+        "owners": {
+          "description": "查看所有所有者和阈值",
+          "handler": "./libs/commands/wallet/owners",
+          "usage": "fsca wallet owners"
+        },
+        "propose": {
+          "description": "提议治理变更",
+          "commands": {
+            "add-owner": {
+              "description": "提议添加新所有者",
+              "handler": "./libs/commands/wallet/propose",
+              "usage": "fsca wallet propose add-owner <address>",
+              "params": {
+                "address": {
+                  "type": "string",
+                  "required": true,
+                  "description": "新所有者地址"
+                }
+              }
+            },
+            "remove-owner": {
+              "description": "提议移除所有者",
+              "handler": "./libs/commands/wallet/propose",
+              "usage": "fsca wallet propose remove-owner <address>",
+              "params": {
+                "address": {
+                  "type": "string",
+                  "required": true,
+                  "description": "要移除的所有者地址"
+                }
+              }
+            },
+            "change-threshold": {
+              "description": "提议修改确认阈值",
+              "handler": "./libs/commands/wallet/propose",
+              "usage": "fsca wallet propose change-threshold <threshold>",
+              "params": {
+                "threshold": {
+                  "type": "number",
+                  "required": true,
+                  "description": "新的确认阈值"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "cluster": {
       "description": "FSCA 集群相关命令",
       "commands": {
