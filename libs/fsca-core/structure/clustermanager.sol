@@ -114,6 +114,14 @@ contract ClusterManager is NoReentryGuard{
         idToIndex[id] = idx;
         nameToId[name] = id;
         addrToId[contractAddr] = id;
+        
+        // Initialize contract settings before mounting
+        normalTemplate target = normalTemplate(contractAddr);
+        target.setContractId(id);
+        if (rightManager != address(0)) {
+            target.setProxyWalletAddr(rightManager);
+        }
+        
         EvokerManager(evokerManager).mount(contractAddr);
     }
     function getById(uint32 id) public view returns (contractRegistration memory) {
@@ -141,20 +149,22 @@ contract ClusterManager is NoReentryGuard{
         require(idx != 0, "Not found");
         uint256 index = idx - 1;
 
+        // Save the item to delete before modifying the array
+        contractRegistration memory itemToDelete = contractRegistrations[index];
         uint256 lastIndex = contractRegistrations.length - 1;
         contractRegistration memory lastItem = contractRegistrations[lastIndex];
 
         if (index != lastIndex) {
             contractRegistrations[index] = lastItem;
             idToIndex[lastItem.contractId] = index + 1;
-            nameToId[lastItem.name] = lastItem.contractId;
-            addrToId[lastItem.contractAddr] = lastItem.contractId;
         }
         contractRegistrations.pop();
+        
+        // Delete mappings for the item being removed (not lastItem)
         delete idToIndex[id];
-        delete nameToId[lastItem.name];
-        delete addrToId[lastItem.contractAddr];
-        EvokerManager(evokerManager).unmount(lastItem.contractAddr);
+        delete nameToId[itemToDelete.name];
+        delete addrToId[itemToDelete.contractAddr];
+        EvokerManager(evokerManager).unmount(itemToDelete.contractAddr);
     }
         /* -------------------------------------------------------------------------- */
     /*                          OperatorPod 操作接口                               */

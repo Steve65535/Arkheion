@@ -108,18 +108,7 @@ contract normalTemplate {
     function setProxyWalletAddr(address proxyAddr) external onlyCluster{
         proxywalletaddr=proxyAddr;
     }
-    function updateActiveModule(uint32 _contractId, address moduleAddress)
-        external
-        onlyCluster
-        notMounted
-    {
-        require(moduleAddress != address(0), "Invalid address");
 
-        activePod.update(_contractId, moduleAddress);
-        emit ModuleChanged(address(this), _contractId, moduleAddress, "ActiveUpdated");
-    }
-
-    
 
     function addPassiveModule(uint32 _contractId, address moduleAddress)
         external
@@ -145,15 +134,7 @@ contract normalTemplate {
         passivePod.remove(_contractId);                    // 再删除
         emit ModuleChanged(address(this), _contractId, moduleAddr, "PassiveRemoved");
     }
-    function updatePassiveModule(uint32 _contractId, address moduleAddress)
-        external
-        onlyCluster
-        notMounted
-    {
-        require(moduleAddress != address(0), "Invalid address");
-        passivePod.update(_contractId, moduleAddress);
-        emit ModuleChanged(address(this), _contractId, moduleAddress, "passiveUpdate");
-    }
+
 
     /* -------------------------------------------------------------------------- */
     /*                          Verification Modifiers                            */
