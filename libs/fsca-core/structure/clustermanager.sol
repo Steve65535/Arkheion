@@ -101,6 +101,7 @@ contract ClusterManager is NoReentryGuard{
         string memory name,
         address contractAddr
     ) external onlyOperator{
+        require(id != 0, "ID cannot be 0");
         require(idToIndex[id] == 0, "ID exists");
         require(nameToId[name] == 0, "Name exists");
         require(addrToId[contractAddr] == 0, "Address exists");
