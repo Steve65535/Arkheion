@@ -32,6 +32,7 @@ coverage.json
 
 # Documents (local planning)
 documents/test-plan.md
+documents/workspace/
 
 # Deployment artifacts
 deployments/
