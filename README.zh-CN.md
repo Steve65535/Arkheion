@@ -1,0 +1,238 @@
+<p align="center">
+  <img src="assets/logo_banner.png" alt="FSCA — 智能合约集群编排器" width="480" />
+</p>
+
+<p align="center">
+  <strong>将 Kubernetes 的编排理念引入 EVM 智能合约开发。</strong><br/>
+  将单体 Solidity 合约拆解为模块化、可热插拔的微服务集群 —— 由多签治理，运行时动态链接。
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/fsca-cli"><img src="https://img.shields.io/npm/v/fsca-cli?style=flat-square&color=4F46E5" alt="npm version" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-06B6D4?style=flat-square" alt="License" /></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D16-brightgreen?style=flat-square" alt="Node" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/solidity-%5E0.8-363636?style=flat-square&logo=solidity" alt="Solidity" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs Welcome" /></a>
+</p>
+
+<p align="center">
+  <a href="README.md">🇺🇸 English</a> ·
+  <a href="user-guide.zh-CN.md">📖 使用指南</a> ·
+  <a href="CONTRIBUTING.md">🤝 贡献指南</a> ·
+  <a href="SECURITY.md">🔒 安全策略</a>
+</p>
+
+---
+
+## 🧬 问题背景
+
+现代 DApp（DeFi、GameFi、NFT 市场）通常将**数千行高度耦合的 Solidity 代码**塞进一个巨型合约，或者藏在脆弱的代理模式后面。升级一个函数意味着重新部署整个单体。一个漏洞就能掏空整个资金池。没有服务发现，没有依赖关系图，没有治理层 —— 只有硬编码的地址散落在各处。
+
+**FSCA 解决这个问题。**
+
+## 💡 什么是 FSCA？
+
+FSCA（**Full Stack Contract Architecture**）将 **Kubernetes** 的思维模型引入智能合约开发：
+
+| Kubernetes | FSCA |
+|------------|------|
+| Cluster | `ClusterManager` — 全网服务注册中心与路由器 |
+| Pod | `NormalTemplate` — 独立的、职责单一的合约单元 |
+| Service Mesh | `EvokerManager` — 运行时依赖图与鉴权防火墙 |
+| RBAC | `ProxyWallet` — 多签门限治理 |
+| kubectl | `fsca-cli` — 一条命令完成部署、挂载、链接、升级 |
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  fsca-cli (终端)                     │ ← 开发者接口
+├─────────────────────────────────────────────────────┤
+│  ClusterManager · EvokerManager · ProxyWallet       │ ← 编排调度层
+├─────────────────────────────────────────────────────┤
+│  Pod A ←→ Pod B ←→ Pod C ←→ Pod D  ...              │ ← 业务逻辑层
+└─────────────────────────────────────────────────────┘
+```
+
+每个 Pod 继承自 **NormalTemplate**，框架自动注入安全钩子、挂载/卸载生命周期控制和双向鉴权修饰器。开发者只需编写**纯业务逻辑**，其余的事情框架全部处理。
+
+---
+
+## ⚡ 快速开始
+
+```bash
+# 安装
+npm install -g fsca-cli
+
+# 初始化项目
+fsca init
+
+# 部署编排骨架（ClusterManager + EvokerManager + ProxyWallet）
+fsca cluster init
+
+# 部署两个业务合约
+fsca deploy --contract LendingPool
+fsca deploy --contract PriceOracle
+
+# 挂载到集群
+fsca cluster mount 1 "LendingPool"
+fsca cluster mount 2 "PriceOracle"
+
+# 建立依赖关系（LendingPool → PriceOracle）
+fsca cluster link active 0xOracleAddr... 2
+
+# 可视化拓扑图
+fsca cluster graph
+```
+
+**完成！** 你已经拥有一个完全编排的、多签治理的、可热插拔的 DeFi 后端。 🎉
+
+---
+
+## 🏗️ 核心特性
+
+### 模块化架构
+```
+# 以前（单体合约）
+contract GodContract { /* 5,000+ 行代码，无法审计 */ }
+
+# 现在（FSCA）
+LendingPool  ──┐
+PriceOracle  ──┼── Cluster（治理、链接、可升级）
+Liquidation  ──┘
+```
+- ✅ 每个合约只负责一件事
+- ✅ 独立部署与升级周期
+- ✅ 更小的字节码单元 = 更低的 Gas 成本
+
+### 运行时动态链接
+```bash
+fsca cluster link active 0xOracle... 2    # LendingPool 调用 Oracle
+fsca cluster link passive 0xOracle... 2   # Oracle 接受来自 LendingPool 的调用
+```
+- ✅ 永远不需要硬编码地址
+- ✅ 调用时双向鉴权校验
+- ✅ 通过 `fsca cluster graph` 实现拓扑可视化
+
+### 零停机热替换升级
+```bash
+fsca cluster upgrade --id 2 --contract PriceOracleV2
+# 旧预言机被卸载，新合约无缝接管 —— 依赖方零感知
+```
+- ✅ 依赖方动态解析最新地址
+- ✅ 链路拓扑在升级后完整保留
+- ✅ 执行前需要多签审批
+
+### 多签治理
+```bash
+fsca wallet submit --to 0xCluster... --data 0x...
+fsca wallet confirm 0
+fsca wallet execute 0
+```
+- ✅ 所有拓扑变更必须通过阈值签名
+- ✅ 内置提案系统（增减签名者、修改阈值）
+- ✅ 从第一天起即满足 DAO 标准
+
+---
+
+## 📊 架构设计
+
+### 三层架构
+
+| 层级 | 组件 | 职责 |
+|------|------|------|
+| **CLI 层** | `fsca-cli` | 面向开发者的自动化终端 |
+| **编排层** | `ClusterManager` | 服务注册中心、挂载表、Operator 管理 |
+| | `EvokerManager` | 依赖图、主动/被动链路鉴权 |
+| | `ProxyWallet` | 多签门限治理闸门 |
+| **业务层** | `NormalTemplate` pods | 隔离的、可挂钩的、职责单一的合约 |
+
+### 安全模型
+
+每次跨合约调用都会经过**零信任校验链**：
+
+```
+Pod A 调用 Pod B
+  → Pod B 的修饰器查询 EvokerManager
+    → EvokerManager 验证 A 是否在 B 的被动白名单中
+      → 该白名单由 ProxyWallet 多签设置
+        → 调用通过  ✅
+        → 或立即回滚  ❌
+```
+
+无地址伪造。无未授权访问。无例外。
+
+---
+
+## 🛠️ 命令速查
+
+| 命令 | 说明 |
+|------|------|
+| `fsca init` | 初始化项目 + Hardhat + 配置 |
+| `fsca deploy --contract <Name>` | 编译并部署 NormalTemplate 合约 |
+| `fsca cluster init` | 部署编排骨架 |
+| `fsca cluster mount <id> <name>` | 将合约注册到集群 |
+| `fsca cluster unmount <id>` | 从集群卸载合约 |
+| `fsca cluster upgrade --id <id> --contract <Name>` | 热替换合约版本 |
+| `fsca cluster link <type> <addr> <id>` | 创建主动/被动依赖 |
+| `fsca cluster unlink <type> <addr> <id>` | 移除依赖 |
+| `fsca cluster graph` | 生成 Mermaid 拓扑图 |
+| `fsca cluster list mounted` | 列出所有已挂载合约 |
+| `fsca cluster info <id>` | 查看合约元数据 |
+| `fsca cluster choose <addr>` | 设置工作上下文 |
+| `fsca cluster operator add/remove <addr>` | 管理集群操作员 |
+| `fsca wallet submit/confirm/execute/revoke` | 多签交易生命周期 |
+| `fsca wallet owners` | 查看签名者与阈值 |
+| `fsca wallet propose add-owner/remove-owner/change-threshold` | 治理提案 |
+| `fsca normal right set/remove` | ABI 级权限控制 |
+| `fsca normal get modules <type>` | 查询已链接模块 |
+
+---
+
+## 🆚 方案对比
+
+| 特性 | Hardhat（原生） | OpenZeppelin 升级 | Diamond (EIP-2535) | **FSCA** |
+|------|-----------------|-------------------|--------------------|----------|
+| 模块化合约 | ❌ | ❌ | ✅（facets） | ✅（pods） |
+| 运行时链接 | ❌ | ❌ | ❌ | ✅ |
+| 依赖关系图 | ❌ | ❌ | ❌ | ✅ |
+| 热替换升级 | ❌ | ✅（proxy） | ✅（facets） | ✅（mount） |
+| 多签治理 | ❌ | ❌ | ❌ | ✅ 内置 |
+| 拓扑可视化 | ❌ | ❌ | ❌ | ✅ Mermaid |
+| CLI 自动化 | 部分 | 部分 | ❌ | ✅ 完整 |
+| 零信任鉴权 | ❌ | ❌ | ❌ | ✅ |
+
+---
+
+## 📈 项目统计
+
+```
+总代码行数:     8,057
+  Solidity:    1,175  (4 个核心合约)
+  JavaScript:  4,749  (18 条 CLI 命令)
+  文档:        1,490+
+  测试:        单元 + 集成测试 (Jest)
+```
+
+---
+
+## 🤝 贡献
+
+欢迎贡献代码！请在提交 PR 前阅读 [贡献指南](CONTRIBUTING.md)。
+
+```bash
+git clone https://github.com/Steve65535/fsca-cli.git
+cd fsca-cli
+npm install
+npm test
+```
+
+---
+
+## 📄 许可证
+
+[MIT](LICENSE) © Steve65535
+
+---
+
+<p align="center">
+  <sub>FSCA — 像搭微服务一样搭建智能合约。</sub>
+</p>
