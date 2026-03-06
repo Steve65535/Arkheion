@@ -1,5 +1,5 @@
 /**
- * 部署 NormalTemplate 合约
+ * 部署继承自 NormalTemplate 的业务合约
  * 1. 编译合约 (npx hardhat compile)
  * 2. 部署合约
  * 3. 更新 project.json 缓存 (alldeployedcontracts, unmountedcontracts)
@@ -37,14 +37,15 @@ function saveProjectConfig(rootDir, config) {
 }
 
 /**
- * 加载 NormalTemplate ABI 和 Bytecode
+ * 按合约类名加载 ABI 和 Bytecode
  */
-function loadNormalTemplateArtifact(rootDir) {
-    // 优先查找 undeployed 目录，因为这是源码目录
+function loadArtifact(rootDir, contractName) {
     const possiblePaths = [
-        path.join(rootDir, 'artifacts', 'contracts', 'undeployed', 'lib', 'normaltemplate.sol', 'normalTemplate.json'),
-        path.join(rootDir, 'artifacts', 'contracts', 'undeployed', 'lib', 'normalTemplate.sol', 'normalTemplate.json'),
-        path.join(rootDir, 'artifacts', 'contracts', 'lib', 'normaltemplate.sol', 'normalTemplate.json'),
+        path.join(rootDir, 'artifacts', 'contracts', 'undeployed', `${contractName}.sol`, `${contractName}.json`),
+        path.join(rootDir, 'artifacts', 'contracts', 'undeployed', 'lib', `${contractName}.sol`, `${contractName}.json`),
+        path.join(rootDir, 'artifacts', 'contracts', 'undeployed', 'structure', `${contractName}.sol`, `${contractName}.json`),
+        path.join(rootDir, 'artifacts', 'contracts', 'undeployed', 'wallet', `${contractName}.sol`, `${contractName}.json`),
+        path.join(rootDir, 'artifacts', 'contracts', `${contractName}.sol`, `${contractName}.json`),
     ];
 
     for (const p of possiblePaths) {
@@ -52,17 +53,19 @@ function loadNormalTemplateArtifact(rootDir) {
             return JSON.parse(fs.readFileSync(p, 'utf-8'));
         }
     }
-    throw new Error("Could not find normalTemplate artifact. Did you compile?");
+    throw new Error(`Artifact not found for "${contractName}". Run "npx hardhat compile" first.`);
 }
 
 module.exports = async function deploy({ rootDir, args = {} }) {
     try {
-        const description = args.description;
-        if (!description) {
-            throw new Error("Description is required");
+        const contractName = args.contract;
+        const description = args.description || contractName;
+
+        if (!contractName) {
+            throw new Error('--contract required: Solidity contract class name (e.g. TradeEngine)');
         }
 
-        console.log(`Preparing to deploy contract: ${description}`);
+        console.log(`Preparing to deploy contract: ${contractName} (name: ${description})`);
 
         // 1. Compile
         console.log("Compiling contracts...");
@@ -82,7 +85,7 @@ module.exports = async function deploy({ rootDir, args = {} }) {
         const signer = getSigner(provider, config.account.privateKey);
 
         // 3. Load Artifact
-        const artifact = loadNormalTemplateArtifact(rootDir);
+        const artifact = loadArtifact(rootDir, contractName);
         const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, signer);
 
         // 4. Deploy

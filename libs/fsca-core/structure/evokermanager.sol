@@ -101,12 +101,11 @@ contract EvokerManager is normalTemplate, NoReentryGuard {
             address targetAddr = actives[i];
             if (targetAddr == address(0)) continue;
 
-
-
             if (!mounted[newContract][targetAddr]) {
                 normalTemplate target = normalTemplate(targetAddr);
+                target.setWhetherMounted(0);
                 target.addPassiveModule(nc.contractId(), newContract);
-
+                target.setWhetherMounted(1);
                 _addEdge(newContract, targetAddr);
             }
         }
@@ -120,7 +119,9 @@ contract EvokerManager is normalTemplate, NoReentryGuard {
 
             if (!mounted[targetAddr][newContract]) {
                 normalTemplate target = normalTemplate(targetAddr);
+                target.setWhetherMounted(0);
                 target.addActiveModule(nc.contractId(), newContract);
+                target.setWhetherMounted(1);
                 _addEdge(targetAddr, newContract);
             }
         }
@@ -178,21 +179,25 @@ contract EvokerManager is normalTemplate, NoReentryGuard {
         
         normalTemplate target = normalTemplate(targetAddr);
         target.setWhetherMounted(0);
-        // 遍历所有节点，检查是否存在边
+        // 遍历所有节点，解锁邻居后清除边
         address[] memory active=target.getAllActiveAddresses();
         address[] memory passive=target.getAllPassiveAddresses();
         for(uint i=0;i<active.length;i++){
             normalTemplate _active=normalTemplate(active[i]);
+            _active.setWhetherMounted(0);
             _active.removePassiveModule(target.contractId());
+            _active.setWhetherMounted(1);
             _removeEdge(targetAddr, active[i]);
         }
         for(uint i=0;i<passive.length;i++){
             normalTemplate _passive=normalTemplate(passive[i]);
+            _passive.setWhetherMounted(0);
             _passive.removeActiveModule(target.contractId());
+            _passive.setWhetherMounted(1);
             _removeEdge(passive[i], targetAddr);
         }
 
-        
+
         _unregisterNode(targetAddr);
 
     }
