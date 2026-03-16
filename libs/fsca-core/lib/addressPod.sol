@@ -11,7 +11,8 @@ library AddressPod {
     /// @notice Pod 对象，存储模块数组 + name=>index 映射
     struct Pod {
         Module[] modules;              // 顺序存储模块，方便遍历
-        mapping(uint32 => uint256) index; // name => index+1, 0 表示不存在
+        mapping(uint32 => uint256) index; // contractId => index+1, 0 表示不存在
+        mapping(address => uint32) addrIndex; // moduleAddress => contractId, 0 表示不存在
     }
 
     /* -------------------------------------------------------------------------- */
@@ -23,19 +24,24 @@ library AddressPod {
         require(pod.index[contractId] == 0, "Module exists");
         pod.modules.push(Module(contractId, moduleAddress));
         pod.index[contractId] = pod.modules.length; // index+1
+        pod.addrIndex[moduleAddress] = contractId;
     }
 
     /// @notice 更新模块地址
     function update(Pod storage pod, uint32 contractId, address moduleAddress) internal {
         uint idx = pod.index[contractId];
         require(idx != 0, "Module not exist");
+        delete pod.addrIndex[pod.modules[idx - 1].moduleAddress];
         pod.modules[idx - 1].moduleAddress = moduleAddress;
+        pod.addrIndex[moduleAddress] = contractId;
     }
 
     /// @notice 删除模块
     function remove(Pod storage pod, uint32 contractId) internal {
         uint idx = pod.index[contractId];
         require(idx != 0, "Module not exist");
+
+        delete pod.addrIndex[pod.modules[idx - 1].moduleAddress];
 
         uint lastIdx = pod.modules.length;
         if (idx != lastIdx) {
@@ -66,6 +72,26 @@ library AddressPod {
         require(idx != 0, "Module does not exist");
         require(pod.modules[idx - 1].moduleAddress == sender, "Access denied: Module mismatch");
         require(sender != address(0), "Access denied: Zero address");
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             地址反查与成员校验                                */
+    /* -------------------------------------------------------------------------- */
+
+    /// @notice 检查地址是否在 Pod 中（O(1)）
+    function containsAddr(Pod storage pod, address addr) internal view returns (bool) {
+        return pod.addrIndex[addr] != 0;
+    }
+
+    /// @notice 通过地址获取 contractId（O(1)）
+    function getIdByAddr(Pod storage pod, address addr) internal view returns (uint32) {
+        return pod.addrIndex[addr];
+    }
+
+    /// @notice 验证地址是否在 Pod 中（O(1)，无需指定 contractId）
+    function verifyMember(Pod storage pod, address sender) internal view {
+        require(sender != address(0), "Access denied: Zero address");
+        require(pod.addrIndex[sender] != 0, "Access denied: Not a pod member");
     }
 
     /* -------------------------------------------------------------------------- */

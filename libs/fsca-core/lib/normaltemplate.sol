@@ -152,6 +152,18 @@ contract normalTemplate {
         _;
     }
 
+    /// @notice 验证调用者是 activePod 中的任意模块（无需指定 ID）
+    modifier onlyActiveMember() {
+        activePod.verifyMember(msg.sender);
+        _;
+    }
+
+    /// @notice 验证调用者是 passivePod 中的任意模块（无需指定 ID）
+    modifier onlyPassiveMember() {
+        passivePod.verifyMember(msg.sender);
+        _;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                           Utility / Query Functions                        */
     /* -------------------------------------------------------------------------- */
