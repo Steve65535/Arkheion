@@ -41,11 +41,10 @@ module.exports = async function list({ rootDir, args = {} }) {
         // 1. Load config
         const config = loadProjectConfig(rootDir);
 
-        if (!config.fsca?.multiSigAddress) {
+        const multiSigAddress = config.fsca?.multisigAddress || config.fsca?.multiSigAddress;
+        if (!multiSigAddress || multiSigAddress === '0x') {
             throw new Error('MultiSig wallet address not found in project.json.');
         }
-
-        const multiSigAddress = config.fsca.multiSigAddress;
         const provider = chainProvider.getProvider(config.network.rpc);
 
         // 2. Load ABI and connect

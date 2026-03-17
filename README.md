@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/fsca-cli"><img src="https://img.shields.io/npm/v/fsca-cli?style=flat-square&color=4F46E5" alt="npm version" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-06B6D4?style=flat-square" alt="License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-06B6D4?style=flat-square" alt="License" /></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D16-brightgreen?style=flat-square" alt="Node" /></a>
   <a href="#"><img src="https://img.shields.io/badge/solidity-%5E0.8-363636?style=flat-square&logo=solidity" alt="Solidity" /></a>
   <a href="#"><img src="https://img.shields.io/badge/framework-Hardhat-FFF100?style=flat-square&logo=data:image/png;base64," alt="Hardhat" /></a>
@@ -248,7 +248,7 @@ npm test
 
 ## 📄 License
 
-[MIT](LICENSE) © Steve65535
+[Apache-2.0](LICENSE) © Steve65535
 
 ---
 

@@ -299,7 +299,7 @@
             "type": {
               "type": "string",
               "required": true,
-              "description": "链接类型: positive 或 passive"
+              "description": "链接类型: active 或 passive（兼容 positive）"
             },
             "targetAddress": {
               "type": "string",
@@ -321,7 +321,7 @@
             "type": {
               "type": "string",
               "required": true,
-              "description": "链接类型: positive 或 passive"
+              "description": "链接类型: active 或 passive（兼容 positive）"
             },
             "targetAddress": {
               "type": "string",

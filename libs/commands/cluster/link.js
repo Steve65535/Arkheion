@@ -52,12 +52,14 @@ function loadNormalTemplateABI(rootDir) {
 
 module.exports = async function link({ rootDir, args = {} }) {
     try {
-        const type          = args.type          || args.arg0;
+        const rawType       = args.type          || args.arg0;
         const targetAddress = args.targetAddress  || args.arg1;
         const targetId      = args.targetId       || args.arg2;
+        const type = rawType === 'active' ? 'positive' : rawType;
+        const displayType = type === 'positive' ? 'active' : type;
 
         if (type !== 'positive' && type !== 'passive') {
-            throw new Error("Type must be 'positive' or 'passive'");
+            throw new Error("Type must be 'active'|'positive' or 'passive'");
         }
         if (!ethers.isAddress(targetAddress)) {
             throw new Error("Invalid targetAddress");
@@ -85,7 +87,7 @@ module.exports = async function link({ rootDir, args = {} }) {
             console.warn(`Warning: Could not check whetherMounted. Assuming 0 (Before Mount). Error: ${e.message}`);
         }
 
-        console.log(`Linking ${type} pod...`);
+        console.log(`Linking ${displayType} pod...`);
         console.log(`  Source: ${currentOperating}`);
         console.log(`  State: ${isMounted == 1 ? 'MOUNTED' : 'UNMOUNTED'}`);
         console.log(`  Target: ${targetAddress} (ID: ${tId})`);

@@ -146,6 +146,13 @@ describe('CommandParser', () => {
       const result = parser.parse(['wallet', 'submit']);
       expect(result.subcommands).toEqual(['wallet', 'submit']);
     });
+
+    it('缺失 required 参数时返回错误', () => {
+      const result = parser.parse(['wallet', 'submit', '--to', '0xabc']);
+      expect(result.handler).toBeNull();
+      expect(result.error).toMatch(/Missing required argument/);
+      expect(result.error).toMatch(/--data/);
+    });
   });
 
   // ──────────────────────────────────────────────
@@ -195,6 +202,13 @@ describe('CommandParser', () => {
       expect(result.to).toBe('0xabc');
       expect(result.value).toBe('100');
       expect(result.data).toBe('0x');
+    });
+
+    it('位置参数按 params 顺序映射到命名参数', () => {
+      const config = { params: { txIndex: { type: 'number' } } };
+      const result = parser.parseArgs(['0'], config);
+      expect(result.arg0).toBe('0');
+      expect(result.txIndex).toBe(0);
     });
   });
 

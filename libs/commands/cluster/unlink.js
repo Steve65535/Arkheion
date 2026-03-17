@@ -51,10 +51,14 @@ function loadNormalTemplateABI(rootDir) {
 
 module.exports = async function unlink({ rootDir, args = {} }) {
     try {
-        const { type, targetAddress, targetId } = args;
+        const rawType = args.type || args.arg0;
+        const targetAddress = args.targetAddress || args.arg1;
+        const targetId = args.targetId || args.arg2;
+        const type = rawType === 'active' ? 'positive' : rawType;
+        const displayType = type === 'positive' ? 'active' : type;
 
         if (type !== 'positive' && type !== 'passive') {
-            throw new Error("Type must be 'positive' or 'passive'");
+            throw new Error("Type must be 'active'|'positive' or 'passive'");
         }
         if (!ethers.isAddress(targetAddress)) {
             throw new Error("Invalid targetAddress");
@@ -87,7 +91,7 @@ module.exports = async function unlink({ rootDir, args = {} }) {
         //     throw new Error("Cannot unlink via ClusterManager if contract is NOT mounted. Use direct contract calls or wait until mounted.");
         // }
 
-        console.log(`Unlinking ${type} pod...`);
+        console.log(`Unlinking ${displayType} pod...`);
         console.log(`  Source: ${currentOperating}`);
         console.log(`  Target: ${targetAddress} (ID: ${tId})`);
         console.log(`  Status: ${isMounted == 1 ? 'Mounted' : 'Unmounted (Before Mount)'}`);

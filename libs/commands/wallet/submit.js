@@ -50,11 +50,10 @@ module.exports = async function submit({ rootDir, args = {} }) {
         // 1. Load config
         const config = loadProjectConfig(rootDir);
 
-        if (!config.fsca?.multiSigAddress) {
+        const multiSigAddress = config.fsca?.multisigAddress || config.fsca?.multiSigAddress;
+        if (!multiSigAddress || multiSigAddress === '0x') {
             throw new Error('MultiSig wallet address not found in project.json. Please run "fsca cluster init" first.');
         }
-
-        const multiSigAddress = config.fsca.multiSigAddress;
         const provider = chainProvider.getProvider(config.network.rpc);
         const signer = walletSigner.getSigner(config.account?.privateKey, provider);
 

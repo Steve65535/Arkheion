@@ -112,6 +112,7 @@ function updateProjectConfig(rootDir, addresses) {
 
   if (addresses.multisigAddress) {
     config.fsca.multisigAddress = addresses.multisigAddress;
+    config.fsca.multiSigAddress = addresses.multisigAddress;
   }
   if (addresses.clusterAddress) {
     config.fsca.clusterAddress = addresses.clusterAddress;

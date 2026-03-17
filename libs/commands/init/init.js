@@ -388,6 +388,7 @@ function createProjectConfig(rootDir, config) {
     fsca: existingConfig.fsca || {
       clusterAddress: "0x",
       multisigAddress: "0x",
+      multiSigAddress: "0x",
       operatorAddress: "0x",
       currentOperating: "",
       alldeployedcontracts: [],

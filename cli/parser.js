@@ -40,6 +40,26 @@ class CommandParser {
 
     // 解析参数
     const parsedArgs = this.parseArgs(result.remainingArgs, result.config);
+    const params = result.config?.params || {};
+    const missingRequired = Object.entries(params)
+      .filter(([key, param]) => {
+        if (!param?.required) return false;
+        const value = parsedArgs[key];
+        return value === undefined || value === null || value === '';
+      })
+      .map(([key]) => key);
+
+    if (missingRequired.length > 0) {
+      const usage = result.config?.usage ? `\nUsage: ${result.config.usage}` : '';
+      return {
+        command: result.path.join(' '),
+        subcommands: result.path,
+        args: parsedArgs,
+        handler: null,
+        config: result.config,
+        error: `Missing required argument(s): ${missingRequired.map(k => `--${k}`).join(', ')}${usage}`
+      };
+    }
 
     return {
       command: result.path.join(' '),
@@ -93,6 +113,7 @@ class CommandParser {
   parseArgs(args, config = {}) {
     const parsed = {};
     const params = config.params || {};
+    const positionalValues = [];
 
     for (let i = 0; i < args.length; i++) {
       const arg = args[i];
@@ -121,6 +142,16 @@ class CommandParser {
         // 位置参数
         const positionalKey = `arg${Object.keys(parsed).filter(k => k.startsWith('arg')).length}`;
         parsed[positionalKey] = arg;
+        positionalValues.push(arg);
+      }
+    }
+
+    // 将位置参数按 params 定义顺序映射到命名参数，兼容 `fsca wallet confirm 0` 这类用法
+    const paramKeys = Object.keys(params);
+    for (let i = 0; i < positionalValues.length && i < paramKeys.length; i++) {
+      const key = paramKeys[i];
+      if (parsed[key] === undefined) {
+        parsed[key] = this.parseValue(positionalValues[i], params[key]);
       }
     }
 
