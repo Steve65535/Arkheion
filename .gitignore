@@ -39,3 +39,5 @@ deployments/
 .openzeppelin/
 documents/project.txt
 roadmap.txt
+CLAUDE.md
+SECURITY.md
