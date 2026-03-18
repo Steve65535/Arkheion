@@ -21,18 +21,23 @@
 | `fsca deploy` | `fsca deploy --contract <ContractName> [--description <name>] [--cleanup <keep\|soft\|hard>] [--yes]` | 部署继承 `normalTemplate` 的业务合约。 |
 
 ## Wallet 命令
+
+所有写操作命令（`submit`、`confirm`、`execute`、`revoke`、`propose`）在提交任何链上交易前都会弹出交互确认。在 CI/自动化场景中传入 `--yes` 可跳过确认。
+
 | 命令 | 用法 | 说明 |
 |---|---|---|
-| `fsca wallet submit` | `fsca wallet submit --to <address> --value <amount> --data <hex>` | 提交多签交易。 |
-| `fsca wallet confirm` | `fsca wallet confirm <txIndex>` | 确认待执行交易。 |
-| `fsca wallet execute` | `fsca wallet execute <txIndex>` | 执行达到阈值的交易。 |
-| `fsca wallet revoke` | `fsca wallet revoke <txIndex>` | 撤销已确认。 |
-| `fsca wallet list` | `fsca wallet list [--pending]` | 列出交易。 |
-| `fsca wallet info` | `fsca wallet info <txIndex>` | 查看交易详情。 |
+| `fsca wallet submit` | `fsca wallet submit --to <address> --value <amount> --data <hex> [--yes]` | 提交多签交易。 |
+| `fsca wallet confirm` | `fsca wallet confirm <txIndex> [--yes]` | 确认待执行交易。 |
+| `fsca wallet execute` | `fsca wallet execute <txIndex> [--yes]` | 执行达到阈值的交易。 |
+| `fsca wallet revoke` | `fsca wallet revoke <txIndex> [--yes]` | 撤销已确认。 |
+| `fsca wallet list` | `fsca wallet list [--pending]` | 列出交易（显示实时有效确认数）。 |
+| `fsca wallet info` | `fsca wallet info <txIndex>` | 查看交易详情（显示实时有效确认数）。 |
 | `fsca wallet owners` | `fsca wallet owners` | 查看所有 owner 与阈值。 |
-| `fsca wallet propose add-owner` | `fsca wallet propose add-owner <address>` | 提议新增 owner。 |
-| `fsca wallet propose remove-owner` | `fsca wallet propose remove-owner <address>` | 提议移除 owner。 |
-| `fsca wallet propose change-threshold` | `fsca wallet propose change-threshold <threshold>` | 提议修改确认阈值。 |
+| `fsca wallet propose add-owner` | `fsca wallet propose add-owner <address> [--yes]` | 提议新增 owner。 |
+| `fsca wallet propose remove-owner` | `fsca wallet propose remove-owner <address> [--yes]` | 提议移除 owner。 |
+| `fsca wallet propose change-threshold` | `fsca wallet propose change-threshold <threshold> [--yes]` | 提议修改确认阈值。 |
+
+> **关于有效确认数**：`wallet list`、`wallet info`、`wallet confirm`、`wallet revoke`、`wallet execute` 均显示**有效确认数** —— 仅统计当前 owner 列表中的确认，移除 owner 后自动修正，不会读取过期的 `numConfirmations` 字段。
 
 ## Cluster 命令
 | 命令 | 用法 | 说明 |

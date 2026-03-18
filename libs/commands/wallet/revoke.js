@@ -8,6 +8,8 @@ const { ethers } = require('ethers');
 const logger = require('../../logger');
 const chainProvider = require('../../../chain/provider');
 const walletSigner = require('../../../wallet/signer');
+const { sendTx } = require('../txExecutor');
+const { acquireLock } = require('../clusterLock');
 
 function loadProjectConfig(rootDir) {
     const configPath = path.join(rootDir, 'project.json');
@@ -32,13 +34,19 @@ function loadMultiSigABI(rootDir) {
     throw new Error('MultiSigWallet ABI not found. Please compile contracts first.');
 }
 
+const { confirm } = require('../confirm');
+
 module.exports = async function revoke({ rootDir, args = {} }) {
+    let lock;
     try {
         const { txIndex } = args;
 
-        if (txIndex === undefined || txIndex < 0) {
-            throw new Error('Invalid transaction index');
+        if (!Number.isInteger(txIndex) || txIndex < 0) {
+            throw new Error('Invalid transaction index: must be a non-negative integer');
         }
+
+        const ok = await confirm(`Revoke confirmation for transaction #${txIndex}?`, !!args.yes);
+        if (!ok) { console.log('Aborted.'); return; }
 
         console.log(`${logger.COLORS.brightBlue}Revoking confirmation for transaction #${txIndex}...${logger.COLORS.reset}`);
         console.log('');
@@ -53,6 +61,8 @@ module.exports = async function revoke({ rootDir, args = {} }) {
         const provider = chainProvider.getProvider(config.network.rpc);
         const signer = walletSigner.getSigner(config.account?.privateKey, provider);
 
+        lock = await acquireLock(rootDir, multiSigAddress, 'wallet revoke');
+
         // 2. Load ABI and connect
         const multiSigABI = loadMultiSigABI(rootDir);
         const multiSigWallet = new ethers.Contract(multiSigAddress, multiSigABI, signer);
@@ -65,27 +75,24 @@ module.exports = async function revoke({ rootDir, args = {} }) {
         }
 
         // 4. Revoke confirmation
-        const tx = await multiSigWallet.revokeConfirmation(txIndex);
-
-        console.log(`${logger.COLORS.brightYellow}Transaction sent: ${tx.hash}${logger.COLORS.reset}`);
-        console.log('Waiting for confirmation...');
-
-        await tx.wait();
+        await sendTx(() => multiSigWallet.revokeConfirmation(txIndex), { label: `revoke:${txIndex}` });
 
         // 5. Get updated transaction info
-        const transaction = await multiSigWallet.transactions(txIndex);
         const threshold = await multiSigWallet.numConfirmationsRequired();
+        const validConfirmations = await multiSigWallet.getValidConfirmations(txIndex);
 
         console.log('');
         console.log(`${logger.COLORS.brightGreen}✓ Confirmation revoked!${logger.COLORS.reset}`);
         console.log('');
         console.log(`${logger.COLORS.brightPurple}╔═══════════════════════════════════════════════════════════════╗${logger.COLORS.reset}`);
-        console.log(`${logger.COLORS.brightPurple}║${logger.COLORS.reset}  ${logger.COLORS.brightYellow}Confirmations:${logger.COLORS.reset} ${logger.COLORS.brightGreen}${transaction.numConfirmations}${logger.COLORS.reset}/${logger.COLORS.brightGreen}${threshold}${logger.COLORS.reset}                                         ${logger.COLORS.brightPurple}║${logger.COLORS.reset}`);
+        console.log(`${logger.COLORS.brightPurple}║${logger.COLORS.reset}  ${logger.COLORS.brightYellow}Confirmations:${logger.COLORS.reset} ${logger.COLORS.brightGreen}${validConfirmations}${logger.COLORS.reset}/${logger.COLORS.brightGreen}${threshold}${logger.COLORS.reset}                                         ${logger.COLORS.brightPurple}║${logger.COLORS.reset}`);
         console.log(`${logger.COLORS.brightPurple}╚═══════════════════════════════════════════════════════════════╝${logger.COLORS.reset}`);
         console.log('');
 
     } catch (error) {
         console.error(`${logger.COLORS.brightYellow}✗ Failed to revoke confirmation:${logger.COLORS.reset}`, error.message);
         process.exit(1);
+    } finally {
+        if (lock) lock.release();
     }
 };

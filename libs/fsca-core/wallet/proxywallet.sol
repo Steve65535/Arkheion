@@ -12,6 +12,9 @@ contract ProxyWallet is normalTemplate, NoReentryGuard {
     
     // EOA Address => Permission Level (0 = Admin/High, >0 = Lower)
     // Stored as Level + 1 to distinguish 0 (unregistered).
+    event RightManagerSet(address indexed addr, uint8 right);
+    event UserRightSet(address indexed user, uint256 level, address indexed setBy);
+
     mapping(address => uint256) public _userRights;
     mapping(address=>uint8) public _rightmanagers;
     address[] public all1s;
@@ -39,36 +42,43 @@ contract ProxyWallet is normalTemplate, NoReentryGuard {
     }
     function setRightManager(address addr,uint8 right) external onlyCluster{
         require(right==1||right==0);
-        _userRights[addr]=right;
         if(right==1){
-            all1s.push(addr);
-        }
-        else if(right==0){
-            for(uint256 i=0;i<all1s.length;i++){
-                if(all1s[i]==addr){
-                    all1s[i] = all1s[all1s.length - 1];
-                    all1s.pop();
-                    break;
+            if(_rightmanagers[addr]!=1){
+                _rightmanagers[addr]=1;
+                all1s.push(addr);
+            }
+        } else {
+            if(_rightmanagers[addr]==1){
+                _rightmanagers[addr]=0;
+                for(uint256 i=0;i<all1s.length;i++){
+                    if(all1s[i]==addr){
+                        all1s[i] = all1s[all1s.length - 1];
+                        all1s.pop();
+                        break;
+                    }
                 }
             }
         }
+        emit RightManagerSet(addr, right);
     }
 
     function setUserRight(address user, uint256 level) external onlyOperator{
         // 1. ClusterManager Logic (God Mode)
         if (msg.sender == clusterAddress) {
             _userRights[user] = level + 1;
+            emit UserRightSet(user, level, msg.sender);
             return;
         }
 
         // 2. Hierarchical Logic (Parent -> Child)
         uint256 senderStored = _userRights[msg.sender];
         require(senderStored > 0, "Access Denied: Sender not registered");
-        
+
         uint256 senderLevel = senderStored - 1;
         require(level > senderLevel, "Access Denied: Cannot grant equal or higher privilege");
 
         _userRights[user] = level + 1;
+        emit UserRightSet(user, level, msg.sender);
     }
 
     function getUserRight(address user) public view returns (bool exists, uint256 level) {

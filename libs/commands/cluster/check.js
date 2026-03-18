@@ -5,9 +5,20 @@
  */
 
 const analyze = require('./auto/analyze');
+const { scanAllConflicts, scanIdConflicts, failOnAllConflicts } = require('../contractConflicts');
 
 module.exports = async function check({ rootDir }) {
     console.log('Running auto check (static analysis only)...\n');
+
+    // Pre-flight: source/artifact/ID conflict check (mirrors auto/init gates)
+    try {
+        const conflicts = scanAllConflicts(rootDir);
+        const { idConflicts } = scanIdConflicts(rootDir);
+        failOnAllConflicts({ ...conflicts, idConflicts });
+    } catch (error) {
+        console.error(`\n✗ Conflict check failed: ${error.message}`);
+        process.exit(1);
+    }
 
     let result;
     try {

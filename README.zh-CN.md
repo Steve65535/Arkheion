@@ -273,9 +273,9 @@ Pod A 调用 Pod B
 | `fsca cluster info <id>` | 查看合约元数据 |
 | `fsca cluster choose <addr>` | 设置工作上下文 |
 | `fsca cluster operator add/remove <addr>` | 管理集群操作员 |
-| `fsca wallet submit/confirm/execute/revoke` | 多签交易生命周期 |
+| `fsca wallet submit/confirm/execute/revoke` | 多签交易生命周期（`--yes` 跳过确认） |
 | `fsca wallet owners` | 查看签名者与阈值 |
-| `fsca wallet propose add-owner/remove-owner/change-threshold` | 治理提案 |
+| `fsca wallet propose add-owner/remove-owner/change-threshold` | 治理提案（`--yes` 跳过确认） |
 | `fsca normal right set/remove` | ABI 级权限控制 |
 | `fsca normal get modules <type>` | 查询已链接模块 |
 
@@ -305,7 +305,7 @@ Pod A 调用 Pod B
   Solidity:    1,175  (4 个核心合约)
   JavaScript:  5,200+ (20 条 CLI 命令 + 自动装配子系统)
   文档:        1,800+
-  测试:        134 单元测试（Jest，全部通过）
+  测试:        312 单元测试（Jest，全部通过）
 ```
 
 ---

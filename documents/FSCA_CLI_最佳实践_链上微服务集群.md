@@ -128,15 +128,26 @@ fsca cluster graph
 - `rootAdmin` 由多签控制，不直接用 EOA 做系统级变更。
 - Operator 最小化，只给执行集群操作的账户。
 - 高频操作走流程化：`submit -> confirm -> execute`，并保留审计记录。
+- **所有写操作命令均有二次确认**：`submit`、`confirm`、`execute`、`revoke`、`propose` 在执行链上操作前都会弹出交互确认。CI/自动化场景统一使用 `--yes` 跳过。
 
 典型治理命令：
 
 ```bash
+# 交互模式（会弹出确认提示）
 fsca wallet submit --to <target> --value 0 --data <hexData>
 fsca wallet confirm <txIndex>
 fsca wallet execute <txIndex>
 fsca wallet info <txIndex>
+
+# CI/自动化模式（跳过确认）
+fsca wallet submit --to <target> --value 0 --data <hexData> --yes
+fsca wallet confirm <txIndex> --yes
+fsca wallet execute <txIndex> --yes
 ```
+
+**有效确认数说明**：`wallet list`、`wallet info`、`wallet confirm`、`wallet revoke`、`wallet execute` 均显示**有效确认数**（live recount），即仅统计当前 owner 列表中的确认。移除 owner 后，旧的 `numConfirmations` 字段不再被信任，系统自动重新计算。这避免了"owner 被移除后仍可执行交易"的安全漏洞。
+
+**ProxyWallet 权限变更事件**：`setRightManager` 和 `setUserRight` 均会发出链上事件（`RightManagerSet`、`UserRightSet`），便于链下审计系统（如 BSPP）实时追踪权限变更。`setRightManager` 已做幂等处理，重复设置同一地址不会导致 `all1s` 数组重复追加。
 
 ## 5. 升级策略（零停机优先）
 

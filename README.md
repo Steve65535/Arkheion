@@ -274,9 +274,9 @@ No address spoofing. No unauthorized access. No exceptions.
 | `fsca cluster info <id>` | Inspect a contract's metadata |
 | `fsca cluster choose <addr>` | Set working context |
 | `fsca cluster operator add/remove <addr>` | Manage cluster operators |
-| `fsca wallet submit/confirm/execute/revoke` | Multi-sig transaction lifecycle |
+| `fsca wallet submit/confirm/execute/revoke` | Multi-sig transaction lifecycle (`--yes` to skip confirmation) |
 | `fsca wallet owners` | View signers & threshold |
-| `fsca wallet propose add-owner/remove-owner/change-threshold` | Governance proposals |
+| `fsca wallet propose add-owner/remove-owner/change-threshold` | Governance proposals (`--yes` to skip confirmation) |
 | `fsca normal right set/remove` | ABI-level permission control |
 | `fsca normal get modules <type>` | Query linked modules |
 
@@ -306,7 +306,7 @@ Total Lines of Code:   8,500+
   Solidity:            1,175  (4 core contracts)
   JavaScript:          5,200+ (20 CLI commands + auto-assembly subsystem)
   Documentation:       1,800+
-  Tests:               115 unit tests (Jest)
+  Tests:               312 unit tests (Jest, all passing)
 ```
 
 ---

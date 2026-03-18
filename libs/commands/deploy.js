@@ -58,6 +58,7 @@ function loadArtifact(rootDir, contractName) {
 
 const { confirm } = require('./confirm');
 const { nextDeploySeq } = require('./version');
+const { scanContractConflicts, scanAllConflicts, scanIdConflicts, failOnConflict, failOnAllConflicts } = require('./contractConflicts');
 
 module.exports = async function deploy({ rootDir, args = {} }) {
     try {
@@ -83,6 +84,13 @@ module.exports = async function deploy({ rootDir, args = {} }) {
         } catch (e) {
             throw new Error("Compilation failed");
         }
+
+        // 1b. Conflict check (post-compile, artifacts now exist)
+        const { hits, conflict } = scanContractConflicts(rootDir, contractName);
+        if (conflict) failOnConflict(contractName, hits);
+        const allConflicts = scanAllConflicts(rootDir);
+        const { idConflicts } = scanIdConflicts(rootDir);
+        failOnAllConflicts({ ...allConflicts, idConflicts });
 
         // 2. Load Config & Connect
         const config = loadProjectConfig(rootDir);

@@ -267,10 +267,13 @@ contract MultiSigWallet {
     {
         Transaction storage transaction = transactions[_txIndex];
 
-        require(
-            transaction.numConfirmations >= numConfirmationsRequired,
-            "cannot execute tx"
-        );
+        uint256 validConfirmations = 0;
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (isConfirmed[_txIndex][owners[i]]) {
+                validConfirmations++;
+            }
+        }
+        require(validConfirmations >= numConfirmationsRequired, "cannot execute tx");
 
         transaction.executed = true;
 
@@ -280,6 +283,14 @@ contract MultiSigWallet {
         require(success, "tx failed");
 
         emit ExecuteTransaction(msg.sender, _txIndex);
+    }
+
+    function getValidConfirmations(uint256 _txIndex) external view returns (uint256) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (isConfirmed[_txIndex][owners[i]]) count++;
+        }
+        return count;
     }
 
     function revokeConfirmation(uint256 _txIndex)
@@ -317,17 +328,20 @@ contract MultiSigWallet {
             uint256 value,
             bytes memory data,
             bool executed,
-            uint256 numConfirmations
+            uint256 validConfirmations
         )
     {
         Transaction storage transaction = transactions[_txIndex];
-
+        uint256 count = 0;
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (isConfirmed[_txIndex][owners[i]]) count++;
+        }
         return (
             transaction.to,
             transaction.value,
             transaction.data,
             transaction.executed,
-            transaction.numConfirmations
+            count
         );
     }
 }

@@ -98,4 +98,41 @@ describe('reconciler', () => {
             expect(plan[0].passivePods).toEqual([]);
         });
     });
+
+    describe('contractId null vs fsca-id 0 boundary', () => {
+        it('infra record with contractId=null does not match fscaId=0', () => {
+            // Simulate a runningcontracts that has an infra record (contractId: null)
+            const running = [
+                { name: 'MultiSigWallet', address: '0xMSIG', contractId: null },
+                { name: 'ClusterManager', address: '0xCLUSTER', contractId: null },
+            ];
+            const contracts = [makeContract(0, 'ContractZero')];
+            const { plan } = reconcile(contracts, makeConfig(running));
+            // ContractZero (fscaId=0) must NOT be treated as already mounted
+            expect(plan[0].state).toBe('undeployed');
+            expect(plan[0].actions).toEqual(['deploy', 'link', 'mount']);
+        });
+
+        it('real contractId=0 entry in runningcontracts is matched correctly', () => {
+            const running = [
+                { name: 'MultiSigWallet', address: '0xMSIG', contractId: null },
+                { name: 'ContractZero', address: '0xZERO', contractId: 0 },
+            ];
+            const contracts = [makeContract(0, 'ContractZero')];
+            const { plan, warnings } = reconcile(contracts, makeConfig(running));
+            expect(plan[0].state).toBe('mounted');
+            expect(warnings.length).toBe(1);
+            expect(warnings[0]).toMatch(/already mounted/);
+        });
+
+        it('null contractId records in runningcontracts never block any fscaId', () => {
+            const running = [
+                { name: 'ProxyWallet', address: '0xPW', contractId: null },
+                { name: 'EvokerManager', address: '0xEM', contractId: null },
+            ];
+            const contracts = [makeContract(1, 'TradeEngine'), makeContract(2, 'OrderBook')];
+            const { plan } = reconcile(contracts, makeConfig(running));
+            expect(plan.every(p => p.state === 'undeployed')).toBe(true);
+        });
+    });
 });

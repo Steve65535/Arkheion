@@ -24,6 +24,7 @@ const { resolveCleanupMode, performCleanup, findSourceFile, findArtifactFile } =
 const { confirm } = require('../confirm');
 const { sendTx } = require('../txExecutor');
 const { acquireLock } = require('../clusterLock');
+const { scanAllConflicts, scanIdConflicts, failOnAllConflicts } = require('../contractConflicts');
 
 /**
  * 加载项目配置
@@ -216,6 +217,11 @@ module.exports = async function clusterInit({ rootDir, args = {} }) {
         }
       }
     }
+
+    // Conflict check (post-compile)
+    const conflicts = scanAllConflicts(rootDir);
+    const { idConflicts } = scanIdConflicts(rootDir);
+    failOnAllConflicts({ ...conflicts, idConflicts });
 
     // 3. 初始化 Provider 和 Signer
     const provider = getProvider(config.network.rpc);

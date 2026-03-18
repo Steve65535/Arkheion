@@ -13,8 +13,8 @@ module.exports = function reconcile(contracts, projectConfig) {
     for (const c of contracts) {
         const { contractName, fscaId, activePods, passivePods } = c;
 
-        // Check if already mounted (match by contractId)
-        const mountedEntry = running.find(r => Number(r.contractId) === fscaId);
+        // Check if already mounted (match by contractId, guard against null)
+        const mountedEntry = running.find(r => r.contractId != null && Number(r.contractId) === fscaId);
         if (mountedEntry) {
             warnings.push(`Contract "${contractName}" (id=${fscaId}) is already mounted at ${mountedEntry.address}, skipping.`);
             results.push({

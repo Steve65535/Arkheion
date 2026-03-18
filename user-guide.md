@@ -21,18 +21,23 @@ For architecture/process best practices, use:
 | `fsca deploy` | `fsca deploy --contract <ContractName> [--description <name>] [--cleanup <keep\|soft\|hard>] [--yes]` | Deploy a business contract inheriting `normalTemplate`. |
 
 ## Wallet Commands
+
+All write commands (`submit`, `confirm`, `execute`, `revoke`, `propose`) prompt for interactive confirmation before submitting any on-chain transaction. Pass `--yes` to skip in CI/automation.
+
 | Command | Usage | Description |
 |---|---|---|
-| `fsca wallet submit` | `fsca wallet submit --to <address> --value <amount> --data <hex>` | Submit a multisig transaction. |
-| `fsca wallet confirm` | `fsca wallet confirm <txIndex>` | Confirm a pending transaction. |
-| `fsca wallet execute` | `fsca wallet execute <txIndex>` | Execute a confirmed transaction. |
-| `fsca wallet revoke` | `fsca wallet revoke <txIndex>` | Revoke your confirmation. |
-| `fsca wallet list` | `fsca wallet list [--pending]` | List wallet transactions. |
-| `fsca wallet info` | `fsca wallet info <txIndex>` | Show transaction details. |
+| `fsca wallet submit` | `fsca wallet submit --to <address> --value <amount> --data <hex> [--yes]` | Submit a multisig transaction. |
+| `fsca wallet confirm` | `fsca wallet confirm <txIndex> [--yes]` | Confirm a pending transaction. |
+| `fsca wallet execute` | `fsca wallet execute <txIndex> [--yes]` | Execute a confirmed transaction. |
+| `fsca wallet revoke` | `fsca wallet revoke <txIndex> [--yes]` | Revoke your confirmation. |
+| `fsca wallet list` | `fsca wallet list [--pending]` | List wallet transactions (shows live valid confirmations). |
+| `fsca wallet info` | `fsca wallet info <txIndex>` | Show transaction details (shows live valid confirmations). |
 | `fsca wallet owners` | `fsca wallet owners` | Show owners and threshold. |
-| `fsca wallet propose add-owner` | `fsca wallet propose add-owner <address>` | Propose adding an owner. |
-| `fsca wallet propose remove-owner` | `fsca wallet propose remove-owner <address>` | Propose removing an owner. |
-| `fsca wallet propose change-threshold` | `fsca wallet propose change-threshold <threshold>` | Propose threshold change. |
+| `fsca wallet propose add-owner` | `fsca wallet propose add-owner <address> [--yes]` | Propose adding an owner. |
+| `fsca wallet propose remove-owner` | `fsca wallet propose remove-owner <address> [--yes]` | Propose removing an owner. |
+| `fsca wallet propose change-threshold` | `fsca wallet propose change-threshold <threshold> [--yes]` | Propose threshold change. |
+
+> **Note on valid confirmations**: `wallet list`, `wallet info`, `wallet confirm`, `wallet revoke`, and `wallet execute` all display *valid confirmations* — the live recount from current owners only. This is accurate even after an owner has been removed.
 
 ## Cluster Commands
 | Command | Usage | Description |

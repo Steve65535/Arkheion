@@ -296,3 +296,48 @@ describe('findPreviousGeneration', () => {
         expect(prev.address).toBe('0xOLD');
     });
 });
+
+// ─── null contractId vs fsca-id 0 boundary ────────────────────────────────────
+
+describe('contractId null vs 0 boundary', () => {
+    const infraRecord = { name: 'MultiSigWallet', address: '0xMSIG', contractId: null, generation: null, status: 'mounted', timeStamp: 1000, deploySeq: 1, podSnapshot: { active: [], passive: [] } };
+    const id0Record   = { name: 'ContractZero',   address: '0xZERO', contractId: 0,    generation: 1,    status: 'mounted', timeStamp: 2000, deploySeq: 2, podSnapshot: { active: [], passive: [] } };
+    const all = [infraRecord, id0Record];
+
+    it('nextGeneration: null contractId returns null, does not count infra records toward id=0', () => {
+        expect(nextGeneration(all, null)).toBeNull();
+        expect(nextGeneration(all, 0)).toBe(2); // only id0Record counts
+    });
+
+    it('findMounted: null contractId arg returns null', () => {
+        expect(findMounted(all, null)).toBeNull();
+    });
+
+    it('findMounted: contractId=0 returns id0Record, not infraRecord', () => {
+        const result = findMounted(all, 0);
+        expect(result).not.toBeNull();
+        expect(result.address).toBe('0xZERO');
+    });
+
+    it('findGeneration: null contractId returns null', () => {
+        expect(findGeneration(all, null, 1)).toBeNull();
+    });
+
+    it('findGeneration: contractId=0 finds id0Record', () => {
+        const result = findGeneration(all, 0, 1);
+        expect(result).not.toBeNull();
+        expect(result.address).toBe('0xZERO');
+    });
+
+    it('findPreviousGeneration: null contractId returns null', () => {
+        expect(findPreviousGeneration(all, null)).toBeNull();
+    });
+
+    it('infra record with contractId=null is never matched by numeric contractId lookup', () => {
+        // Searching for contractId=0 must not return the infra record
+        const mounted = findMounted(all, 0);
+        expect(mounted && mounted.name).toBe('ContractZero');
+        const gen = findGeneration(all, 0, 1);
+        expect(gen && gen.name).toBe('ContractZero');
+    });
+});

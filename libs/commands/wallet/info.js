@@ -35,8 +35,8 @@ module.exports = async function info({ rootDir, args = {} }) {
     try {
         const { txIndex } = args;
 
-        if (txIndex === undefined || txIndex < 0) {
-            throw new Error('Invalid transaction index');
+        if (!Number.isInteger(txIndex) || txIndex < 0) {
+            throw new Error('Invalid transaction index: must be a non-negative integer');
         }
 
         console.log(`${logger.COLORS.brightBlue}Querying transaction #${txIndex}...${logger.COLORS.reset}`);
@@ -59,6 +59,7 @@ module.exports = async function info({ rootDir, args = {} }) {
         const tx = await multiSigWallet.transactions(txIndex);
         const threshold = await multiSigWallet.numConfirmationsRequired();
         const owners = await multiSigWallet.getOwners();
+        const validConfirmations = await multiSigWallet.getValidConfirmations(txIndex);
 
         // 4. Check who confirmed
         const confirmations = [];
@@ -78,7 +79,7 @@ module.exports = async function info({ rootDir, args = {} }) {
         const statusColor = tx.executed ? logger.COLORS.brightGreen : logger.COLORS.brightYellow;
         const statusText = tx.executed ? 'EXECUTED' : 'PENDING';
         console.log(`${logger.COLORS.brightPurple}║${logger.COLORS.reset}  ${logger.COLORS.brightYellow}Status:${logger.COLORS.reset}    ${statusColor}${statusText}${logger.COLORS.reset}                                          ${logger.COLORS.brightPurple}║${logger.COLORS.reset}`);
-        console.log(`${logger.COLORS.brightPurple}║${logger.COLORS.reset}  ${logger.COLORS.brightYellow}Confirms:${logger.COLORS.reset}  ${logger.COLORS.brightGreen}${tx.numConfirmations}${logger.COLORS.reset}/${logger.COLORS.brightGreen}${threshold}${logger.COLORS.reset}                                                ${logger.COLORS.brightPurple}║${logger.COLORS.reset}`);
+        console.log(`${logger.COLORS.brightPurple}║${logger.COLORS.reset}  ${logger.COLORS.brightYellow}Confirms:${logger.COLORS.reset}  ${logger.COLORS.brightGreen}${validConfirmations}${logger.COLORS.reset}/${logger.COLORS.brightGreen}${threshold}${logger.COLORS.reset}                                                ${logger.COLORS.brightPurple}║${logger.COLORS.reset}`);
         console.log(`${logger.COLORS.brightPurple}╠═══════════════════════════════════════════════════════════════╣${logger.COLORS.reset}`);
         console.log(`${logger.COLORS.brightPurple}║${logger.COLORS.reset}  ${logger.COLORS.brightYellow}Confirmations:${logger.COLORS.reset}                                                ${logger.COLORS.brightPurple}║${logger.COLORS.reset}`);
 
@@ -93,11 +94,11 @@ module.exports = async function info({ rootDir, args = {} }) {
 
         // 6. Next steps
         if (!tx.executed) {
-            if (tx.numConfirmations >= threshold) {
+            if (validConfirmations >= threshold) {
                 console.log(`${logger.COLORS.brightGreen}✓ Ready to execute!${logger.COLORS.reset}`);
                 console.log(`  Run: ${logger.COLORS.brightBlue}fsca wallet execute ${txIndex}${logger.COLORS.reset}`);
             } else {
-                const remaining = threshold - tx.numConfirmations;
+                const remaining = threshold - validConfirmations;
                 console.log(`${logger.COLORS.brightYellow}⏳ Waiting for ${remaining} more confirmation(s)${logger.COLORS.reset}`);
                 console.log(`  Run: ${logger.COLORS.brightBlue}fsca wallet confirm ${txIndex}${logger.COLORS.reset}`);
             }

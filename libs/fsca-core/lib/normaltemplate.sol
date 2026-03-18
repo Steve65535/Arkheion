@@ -91,7 +91,10 @@ contract normalTemplate {
     }
     /// @notice 检查调用权限
     modifier checkAbiRight(uint256 abiId){
-        require(IProxyWallet(proxywalletaddr)._userRights(msg.sender) <= abiRights[abiId], "Insufficient permission");
+        require(proxywalletaddr != address(0), "ProxyWallet not configured");
+        uint256 stored = IProxyWallet(proxywalletaddr)._userRights(msg.sender);
+        require(stored > 0, "Not registered");
+        require(stored - 1 <= abiRights[abiId], "Insufficient permission");
         _;
     }
 

@@ -24,6 +24,7 @@ const { confirm } = require('../confirm');
 const { nextDeploySeq, nextGeneration } = require('../version');
 const { sendTx } = require('../txExecutor');
 const { acquireLock } = require('../clusterLock');
+const { scanAllConflicts, scanIdConflicts, failOnAllConflicts } = require('../contractConflicts');
 
 const getProvider = chainProvider.getProvider;
 const getSigner = walletSigner.getSigner;
@@ -142,6 +143,11 @@ module.exports = async function auto({ rootDir, args = {} }) {
         } catch (e) {
             throw new Error('Compilation failed');
         }
+
+        // 3b. Conflict check
+        const conflicts = scanAllConflicts(rootDir);
+        const { idConflicts } = scanIdConflicts(rootDir);
+        failOnAllConflicts({ ...conflicts, idConflicts });
 
         // Connect
         const provider = getProvider(config.network.rpc);
@@ -341,7 +347,7 @@ module.exports = async function auto({ rootDir, args = {} }) {
                 c => c.address.toLowerCase() !== contractAddr.toLowerCase()
             );
             const runEntry = { name: item.contractName, address: contractAddr, contractId: item.fscaId, timeStamp: timestamp };
-            const existIdx = config.fsca.runningcontracts.findIndex(c => Number(c.contractId) === item.fscaId);
+            const existIdx = config.fsca.runningcontracts.findIndex(c => c.contractId != null && Number(c.contractId) === item.fscaId);
             if (existIdx >= 0) config.fsca.runningcontracts[existIdx] = runEntry;
             else config.fsca.runningcontracts.push(runEntry);
             const newGen = nextGeneration(config.fsca.alldeployedcontracts, item.fscaId);

@@ -27,6 +27,7 @@ const analyze = require('./auto/analyze');
 const { nextGeneration, nextDeploySeq } = require('../version');
 const { sendTx } = require('../txExecutor');
 const { acquireLock } = require('../clusterLock');
+const { scanContractConflicts, scanAllConflicts, scanIdConflicts, failOnConflict, failOnAllConflicts } = require('../contractConflicts');
 
 const getProvider = chainProvider.getProvider;
 const getSigner = walletSigner.getSigner;
@@ -197,6 +198,12 @@ module.exports = async function upgrade({ rootDir, args = {} }) {
                 console.log('      Artifacts not found, compiling...');
                 execSync('npx hardhat compile', { cwd: rootDir, stdio: 'inherit' });
             }
+            // Conflict check
+            const { hits, conflict } = scanContractConflicts(rootDir, contractName);
+            if (conflict) failOnConflict(contractName, hits);
+            const allConflicts = scanAllConflicts(rootDir);
+            const { idConflicts } = scanIdConflicts(rootDir);
+            failOnAllConflicts({ ...allConflicts, idConflicts });
             const artifact = loadArtifact(rootDir, contractName);
             const constructorArgs = buildConstructorArgs(artifact, clusterAddr, registeredName);
             newAddr = await deployContract(signer, artifact.abi, artifact.bytecode, constructorArgs);

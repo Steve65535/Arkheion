@@ -70,12 +70,14 @@ module.exports = async function list({ rootDir, args = {} }) {
                 continue;
             }
 
+            const validConfirmations = await multiSigWallet.getValidConfirmations(i);
+
             transactions.push({
                 index: i,
                 to: tx.to,
                 value: tx.value,
                 executed: tx.executed,
-                confirmations: tx.numConfirmations
+                confirmations: validConfirmations
             });
         }
 

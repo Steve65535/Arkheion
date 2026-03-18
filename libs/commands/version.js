@@ -16,7 +16,7 @@
 function nextGeneration(allDeployed, contractId) {
     if (contractId === null || contractId === undefined) return null;
     const existing = (allDeployed || [])
-        .filter(r => Number(r.contractId) === Number(contractId) && r.generation != null)
+        .filter(r => r.contractId != null && Number(r.contractId) === Number(contractId) && r.generation != null)
         .map(r => r.generation);
     return existing.length === 0 ? 1 : Math.max(...existing) + 1;
 }
@@ -72,7 +72,8 @@ function normalizeRecord(record, sourceArray) {
  */
 function findMounted(allDeployed, contractId) {
     const candidates = (allDeployed || []).filter(r => {
-        if (r.contractId == null || Number(r.contractId) !== Number(contractId)) return false;
+        if (r.contractId == null || contractId == null) return false;
+        if (Number(r.contractId) !== Number(contractId)) return false;
         const normalized = normalizeRecord(r, 'runningcontracts');
         return normalized.status === 'mounted';
     });
@@ -95,8 +96,9 @@ function findMounted(allDeployed, contractId) {
  * @returns {object|null}
  */
 function findGeneration(allDeployed, contractId, generation) {
+    if (contractId == null) return null;
     return (allDeployed || []).find(
-        r => Number(r.contractId) === Number(contractId) && Number(r.generation) === Number(generation)
+        r => r.contractId != null && Number(r.contractId) === Number(contractId) && Number(r.generation) === Number(generation)
     ) || null;
 }
 
@@ -113,6 +115,7 @@ function findPreviousGeneration(allDeployed, contractId) {
 
     const candidates = (allDeployed || []).filter(r =>
         r.contractId != null &&
+        contractId != null &&
         Number(r.contractId) === Number(contractId) &&
         r.address &&
         r.address.toLowerCase() !== mounted.address.toLowerCase()

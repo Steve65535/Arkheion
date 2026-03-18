@@ -8,6 +8,8 @@ const { ethers } = require('ethers');
 const logger = require('../../logger');
 const chainProvider = require('../../../chain/provider');
 const walletSigner = require('../../../wallet/signer');
+const { sendTx } = require('../txExecutor');
+const { acquireLock } = require('../clusterLock');
 
 function loadProjectConfig(rootDir) {
     const configPath = path.join(rootDir, 'project.json');
@@ -32,13 +34,19 @@ function loadMultiSigABI(rootDir) {
     throw new Error('MultiSigWallet ABI not found. Please compile contracts first.');
 }
 
+const { confirm } = require('../confirm');
+
 module.exports = async function execute({ rootDir, args = {} }) {
+    let lock;
     try {
         const { txIndex } = args;
 
-        if (txIndex === undefined || txIndex < 0) {
-            throw new Error('Invalid transaction index');
+        if (!Number.isInteger(txIndex) || txIndex < 0) {
+            throw new Error('Invalid transaction index: must be a non-negative integer');
         }
+
+        const ok = await confirm(`Execute transaction #${txIndex} on-chain?`, !!args.yes);
+        if (!ok) { console.log('Aborted.'); return; }
 
         console.log(`${logger.COLORS.brightBlue}Executing transaction #${txIndex}...${logger.COLORS.reset}`);
         console.log('');
@@ -53,6 +61,8 @@ module.exports = async function execute({ rootDir, args = {} }) {
         const provider = chainProvider.getProvider(config.network.rpc);
         const signer = walletSigner.getSigner(config.account?.privateKey, provider);
 
+        lock = await acquireLock(rootDir, multiSigAddress, 'wallet execute');
+
         // 2. Load ABI and connect
         const multiSigABI = loadMultiSigABI(rootDir);
         const multiSigWallet = new ethers.Contract(multiSigAddress, multiSigABI, signer);
@@ -60,27 +70,23 @@ module.exports = async function execute({ rootDir, args = {} }) {
         // 3. Check transaction status
         const transaction = await multiSigWallet.transactions(txIndex);
         const threshold = await multiSigWallet.numConfirmationsRequired();
+        const validConfirmations = await multiSigWallet.getValidConfirmations(txIndex);
 
         if (transaction.executed) {
             console.log(`${logger.COLORS.brightYellow}⚠ Transaction already executed.${logger.COLORS.reset}`);
             return;
         }
 
-        if (transaction.numConfirmations < threshold) {
+        if (validConfirmations < threshold) {
             console.log(`${logger.COLORS.brightYellow}⚠ Transaction does not have enough confirmations.${logger.COLORS.reset}`);
-            console.log(`  Current: ${transaction.numConfirmations}/${threshold}`);
-            console.log(`  Need ${threshold - transaction.numConfirmations} more confirmation(s)`);
+            console.log(`  Current: ${validConfirmations}/${threshold}`);
+            console.log(`  Need ${threshold - validConfirmations} more confirmation(s)`);
             return;
         }
 
         // 4. Execute transaction
         console.log(`${logger.COLORS.brightYellow}Executing transaction...${logger.COLORS.reset}`);
-        const tx = await multiSigWallet.executeTransaction(txIndex);
-
-        console.log(`${logger.COLORS.brightYellow}Transaction sent: ${tx.hash}${logger.COLORS.reset}`);
-        console.log('Waiting for confirmation...');
-
-        await tx.wait();
+        await sendTx(() => multiSigWallet.executeTransaction(txIndex), { label: `execute:${txIndex}` });
 
         console.log('');
         console.log(`${logger.COLORS.brightGreen}✓ Transaction executed successfully!${logger.COLORS.reset}`);
@@ -94,5 +100,7 @@ module.exports = async function execute({ rootDir, args = {} }) {
     } catch (error) {
         console.error(`${logger.COLORS.brightYellow}✗ Failed to execute transaction:${logger.COLORS.reset}`, error.message);
         process.exit(1);
+    } finally {
+        if (lock) lock.release();
     }
 };

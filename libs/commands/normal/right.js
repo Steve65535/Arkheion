@@ -13,6 +13,8 @@ const { ethers } = require('ethers');
 
 const chainProvider = require('../../../chain/provider');
 const walletSigner = require('../../../wallet/signer');
+const { sendTx } = require('../txExecutor');
+const { acquireLock } = require('../clusterLock');
 
 const getProvider = chainProvider.getProvider;
 const getSigner = walletSigner.getSigner;
@@ -54,6 +56,7 @@ function loadClusterManagerABI(rootDir) {
 }
 
 module.exports = async function right({ rootDir, args = {}, subcommands = [], commandName = '' }) {
+    let lock;
     try {
         // 1. Determine action
         let action = subcommands[0]; // set or remove
@@ -74,6 +77,17 @@ module.exports = async function right({ rootDir, args = {}, subcommands = [], co
 
         if (!abiId) throw new Error("abiId is required.");
         if (action === 'set' && !maxRight) throw new Error("maxRight is required for set action.");
+
+        const abiIdNum = Number(abiId);
+        if (!Number.isInteger(abiIdNum) || abiIdNum < 0) {
+            throw new Error('abiId must be a non-negative integer');
+        }
+        if (action === 'set') {
+            const maxRightNum = Number(maxRight);
+            if (!Number.isInteger(maxRightNum) || maxRightNum < 0) {
+                throw new Error('maxRight must be a non-negative integer');
+            }
+        }
 
         // 2. Load Config
         const config = loadProjectConfig(rootDir);
@@ -97,6 +111,8 @@ module.exports = async function right({ rootDir, args = {}, subcommands = [], co
         const provider = getProvider(config.network.rpc);
         const signer = getSigner(config.account.privateKey, provider);
 
+        lock = await acquireLock(rootDir, clusterAddress, 'normal right');
+
         // 4. Prepare Calldata for NormalTemplate
         const normalInterface = new ethers.Interface(loadNormalTemplateABI(rootDir));
         let calldata;
@@ -104,11 +120,11 @@ module.exports = async function right({ rootDir, args = {}, subcommands = [], co
 
         if (action === 'set') {
             // setAbiRight(uint256 abiId, uint256 maxRight)
-            calldata = normalInterface.encodeFunctionData("setAbiRight", [abiId, maxRight]);
+            calldata = normalInterface.encodeFunctionData("setAbiRight", [abiIdNum, Number(maxRight)]);
             abiName = "setAbiRight";
         } else {
             // removeAbiRight(uint256 abiId)
-            calldata = normalInterface.encodeFunctionData("removeAbiRight", [abiId]);
+            calldata = normalInterface.encodeFunctionData("removeAbiRight", [abiIdNum]);
             abiName = "removeAbiRight";
         }
 
@@ -118,16 +134,14 @@ module.exports = async function right({ rootDir, args = {}, subcommands = [], co
 
         console.log(`  -> Sending via ClusterManager (${clusterAddress})...`);
 
-        // function universalCall(address contractAddr, string calldata abiName, bytes calldata data)
-        const tx = await cluster.universalCall(currentOperating, abiName, calldata);
-        console.log(`Transaction sent: ${tx.hash}`);
-
-        await tx.wait();
+        await sendTx(() => cluster.universalCall(currentOperating, abiName, calldata), { label: `normal:right:${abiName}` });
         console.log(`✓ Access Right updated successfully via Cluster.`);
 
     } catch (error) {
         console.error(`Failed to execute right ${args.action || ''}:`, error.message);
         if (process.env.DEBUG) console.error(error);
         process.exit(1);
+    } finally {
+        if (lock) lock.release();
     }
 };

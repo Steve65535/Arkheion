@@ -8,6 +8,8 @@ const { ethers } = require('ethers');
 const logger = require('../../logger');
 const chainProvider = require('../../../chain/provider');
 const walletSigner = require('../../../wallet/signer');
+const { sendTx } = require('../txExecutor');
+const { acquireLock } = require('../clusterLock');
 
 function loadProjectConfig(rootDir) {
     const configPath = path.join(rootDir, 'project.json');
@@ -32,7 +34,10 @@ function loadMultiSigABI(rootDir) {
     throw new Error('MultiSigWallet ABI not found. Please compile contracts first.');
 }
 
+const { confirm } = require('../confirm');
+
 module.exports = async function submit({ rootDir, args = {} }) {
+    let lock;
     try {
         const { to, value = '0', data } = args;
 
@@ -43,6 +48,9 @@ module.exports = async function submit({ rootDir, args = {} }) {
         if (!data || !data.startsWith('0x')) {
             throw new Error(`Invalid data: must be hex string starting with 0x`);
         }
+
+        const ok = await confirm(`Submit transaction to MultiSig wallet (to: ${to}, value: ${value} ETH)?`, !!args.yes);
+        if (!ok) { console.log('Aborted.'); return; }
 
         console.log(`${logger.COLORS.brightBlue}Submitting transaction to MultiSig wallet...${logger.COLORS.reset}`);
         console.log('');
@@ -57,6 +65,8 @@ module.exports = async function submit({ rootDir, args = {} }) {
         const provider = chainProvider.getProvider(config.network.rpc);
         const signer = walletSigner.getSigner(config.account?.privateKey, provider);
 
+        lock = await acquireLock(rootDir, multiSigAddress, 'wallet submit');
+
         // 2. Load ABI and connect
         const multiSigABI = loadMultiSigABI(rootDir);
         const multiSigWallet = new ethers.Contract(multiSigAddress, multiSigABI, signer);
@@ -69,12 +79,7 @@ module.exports = async function submit({ rootDir, args = {} }) {
         console.log('');
 
         const valueWei = ethers.parseEther(value);
-        const tx = await multiSigWallet.submitTransaction(to, valueWei, data);
-
-        console.log(`${logger.COLORS.brightYellow}Transaction sent: ${tx.hash}${logger.COLORS.reset}`);
-        console.log('Waiting for confirmation...');
-
-        const receipt = await tx.wait();
+        const receipt = await sendTx(() => multiSigWallet.submitTransaction(to, valueWei, data), { label: 'wallet:submit' });
 
         // 4. Parse event to get txIndex
         const submitEvent = receipt.logs
@@ -107,5 +112,7 @@ module.exports = async function submit({ rootDir, args = {} }) {
     } catch (error) {
         console.error(`${logger.COLORS.brightYellow}✗ Failed to submit transaction:${logger.COLORS.reset}`, error.message);
         process.exit(1);
+    } finally {
+        if (lock) lock.release();
     }
 };

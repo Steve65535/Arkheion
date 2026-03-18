@@ -8,6 +8,8 @@ const { ethers } = require('ethers');
 const logger = require('../../logger');
 const chainProvider = require('../../../chain/provider');
 const walletSigner = require('../../../wallet/signer');
+const { sendTx } = require('../txExecutor');
+const { acquireLock } = require('../clusterLock');
 
 function loadProjectConfig(rootDir) {
     const configPath = path.join(rootDir, 'project.json');
@@ -32,7 +34,10 @@ function loadMultiSigABI(rootDir) {
     throw new Error('MultiSigWallet ABI not found. Please compile contracts first.');
 }
 
+const { confirm } = require('../confirm');
+
 module.exports = async function propose({ rootDir, args = {}, subcommands = [] }) {
+    let lock;
     try {
         const subcommand = subcommands[subcommands.length - 1];
         // Determine action based on subcommand
@@ -66,6 +71,9 @@ module.exports = async function propose({ rootDir, args = {}, subcommands = [] }
             throw new Error(`Unknown subcommand: ${subcommand}`);
         }
 
+        const ok = await confirm(`Submit governance proposal: ${description}?`, !!args.yes);
+        if (!ok) { console.log('Aborted.'); return; }
+
         console.log(`${logger.COLORS.brightBlue}Proposing governance change: ${description}${logger.COLORS.reset}`);
         console.log('');
 
@@ -79,24 +87,21 @@ module.exports = async function propose({ rootDir, args = {}, subcommands = [] }
         const provider = chainProvider.getProvider(config.network.rpc);
         const signer = walletSigner.getSigner(config.account?.privateKey, provider);
 
+        lock = await acquireLock(rootDir, multiSigAddress, 'wallet propose');
+
         // 2. Load ABI and connect
         const multiSigABI = loadMultiSigABI(rootDir);
         const multiSigWallet = new ethers.Contract(multiSigAddress, multiSigABI, signer);
 
         // 3. Submit proposal
-        let tx;
+        let receipt;
         if (action === 'proposeAddOwner') {
-            tx = await multiSigWallet.proposeAddOwner(param, 0, '0x');
+            receipt = await sendTx(() => multiSigWallet.proposeAddOwner(param, 0, '0x'), { label: 'propose:add-owner' });
         } else if (action === 'proposeRemoveOwner') {
-            tx = await multiSigWallet.proposeRemoveOwner(param, 0, '0x');
+            receipt = await sendTx(() => multiSigWallet.proposeRemoveOwner(param, 0, '0x'), { label: 'propose:remove-owner' });
         } else if (action === 'proposeChangeThreshold') {
-            tx = await multiSigWallet.proposeChangeThreshold(param, 0, '0x');
+            receipt = await sendTx(() => multiSigWallet.proposeChangeThreshold(param, 0, '0x'), { label: 'propose:change-threshold' });
         }
-
-        console.log(`${logger.COLORS.brightYellow}Transaction sent: ${tx.hash}${logger.COLORS.reset}`);
-        console.log('Waiting for confirmation...');
-
-        const receipt = await tx.wait();
 
         // 4. Parse event to get txIndex
         const submitEvent = receipt.logs
@@ -130,5 +135,7 @@ module.exports = async function propose({ rootDir, args = {}, subcommands = [] }
     } catch (error) {
         console.error(`${logger.COLORS.brightYellow}✗ Failed to submit proposal:${logger.COLORS.reset}`, error.message);
         process.exit(1);
+    } finally {
+        if (lock) lock.release();
     }
 };
