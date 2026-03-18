@@ -385,6 +385,23 @@
               "description": "跳过 pod 配置复制，适用于新合约依赖关系已变更的情况"
             }
           }
+        },
+        "auto": {
+          "description": "自动装配集群合约 (扫描源码注解, 解析依赖, 自动部署/链接/挂载)",
+          "handler": "./libs/commands/cluster/auto",
+          "usage": "fsca cluster auto [--dry-run]",
+          "params": {
+            "dry-run": {
+              "type": "boolean",
+              "required": false,
+              "description": "预览模式，不执行任何链上操作"
+            }
+          }
+        },
+        "check": {
+          "description": "静态检查集群注解 (ID 冲突 / pod 环 / 函数调用环，不执行链上操作)",
+          "handler": "./libs/commands/cluster/check",
+          "usage": "fsca cluster check"
         }
       }
     },

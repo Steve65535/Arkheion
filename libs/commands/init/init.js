@@ -8,6 +8,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
 const logger = require('../../logger');
+const { attachFileLogger } = require('../../fsca-logger');
 
 const ASCII_TITLE = `
   ███████╗███████╗ ██████╗ █████╗       ██████╗██╗     ██╗
@@ -465,6 +466,14 @@ module.exports = async function init({ rootDir, args = {} }) {
   printInitTitle();
   console.log('Initializing FSCA project...');
   console.log('');
+
+  // Create logs/ directory early and attach file logger for init output
+  const logsDir = path.join(rootDir, 'logs');
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+    console.log('Created logs/ directory');
+  }
+  attachFileLogger(rootDir);
 
   try {
     // 1. 检测 hardhat

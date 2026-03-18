@@ -15,7 +15,10 @@ const COLORS = {
     brightBlue: '\x1b[94m',
     brightYellow: '\x1b[93m',
     brightGreen: '\x1b[92m',
-    bold: '\x1b[1m'
+    brightRed: '\x1b[91m',
+    brightCyan: '\x1b[96m',
+    bold: '\x1b[1m',
+    dim: '\x1b[2m'
 };
 
 /**
@@ -54,10 +57,53 @@ function logInteraction(command, input, result) {
     if (result) logResult(result);
 }
 
+/**
+ * Logs an error in bright red with ✗ prefix.
+ */
+function logError(message) {
+    console.error(`${COLORS.brightRed}✗ Error: ${message}${COLORS.reset}`);
+}
+
+/**
+ * Logs a warning in bright yellow with ⚠ prefix.
+ */
+function logWarn(message) {
+    console.warn(`${COLORS.brightYellow}⚠ Warning: ${message}${COLORS.reset}`);
+}
+
+/**
+ * Logs an info line in cyan with ℹ prefix.
+ */
+function logInfo(message) {
+    console.log(`${COLORS.brightCyan}ℹ ${message}${COLORS.reset}`);
+}
+
+/**
+ * Logs a diagnostic block — a titled section with indented lines.
+ * Used for structured error context (file paths, suggestions, etc.)
+ * @param {string} title
+ * @param {string[]} lines
+ * @param {'error'|'warn'|'info'} level
+ */
+function logDiagnostic(title, lines, level = 'error') {
+    const color = level === 'error' ? COLORS.brightRed
+        : level === 'warn' ? COLORS.brightYellow
+        : COLORS.brightCyan;
+    const prefix = level === 'error' ? '✗' : level === 'warn' ? '⚠' : 'ℹ';
+    console.error(`${color}${COLORS.bold}${prefix} ${title}${COLORS.reset}`);
+    for (const line of lines) {
+        console.error(`${COLORS.dim}  │${COLORS.reset} ${line}`);
+    }
+}
+
 module.exports = {
     COLORS,
     logCommand,
     logInput,
     logResult,
-    logInteraction
+    logInteraction,
+    logError,
+    logWarn,
+    logInfo,
+    logDiagnostic,
 };

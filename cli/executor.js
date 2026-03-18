@@ -37,10 +37,11 @@ class CommandExecutor {
       logger.logCommand(parsedCommand.command);
     }
 
-    // Log Input (Arguments)
+    // Log Input (Arguments) — redact sensitive keys
     if (parsedCommand.args && Object.keys(parsedCommand.args).length > 0) {
+      const SENSITIVE = new Set(['accountPrivateKey', 'privateKey', 'private-key', 'mnemonic', 'seed']);
       const inputStr = Object.entries(parsedCommand.args)
-        .map(([k, v]) => `--${k}=${v}`)
+        .map(([k, v]) => `--${k}=${SENSITIVE.has(k) ? '[REDACTED]' : v}`)
         .join(' ');
       logger.logInput(inputStr);
     }

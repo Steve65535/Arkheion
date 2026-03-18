@@ -11,8 +11,16 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('../libs/logger');
 const credentials = require('../wallet/credentials');
+const { attachFileLogger } = require('../libs/fsca-logger');
 
 credentials.loadEnvFile(process.cwd());
+
+// Attach file logger — writes all console output to logs/<date>.log
+// Only activate when a project.json exists (i.e. inside an fsca project)
+const projectJsonPath = path.join(process.cwd(), 'project.json');
+if (fs.existsSync(projectJsonPath)) {
+    attachFileLogger(process.cwd());
+}
 
 // 加载命令配置
 const commandsConfigPath = path.join(__dirname, 'commands.json');

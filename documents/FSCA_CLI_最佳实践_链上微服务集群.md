@@ -444,3 +444,45 @@ function onSettlementCallback(bytes32 orderId)
 
 - 对“回调类函数、确认类函数、状态同步函数”优先使用 `passiveModuleVerification`。
 - 对“被指定上游模块触发的核心入口”使用 `activeModuleVerification`。
+
+## 13. 自动装配最佳实践（cluster auto / cluster check）
+
+### 13.1 注解规范（推荐模板）
+
+```solidity
+// @fsca-auto yes
+// @fsca-id 2
+// @fsca-active 1,3
+// @fsca-passive 4
+contract TradeEngineV2 is normalTemplate {
+    // business logic
+}
+```
+
+规范要求：
+- `@fsca-id` 全局唯一，禁止复用。
+- `@fsca-active` / `@fsca-passive` 只填写目标 Pod ID，逗号分隔。
+- 未接入自动装配的合约不要写 `@fsca-auto yes`。
+- 一文件一业务合约，便于扫描与定位冲突。
+
+### 13.2 自动装配命令敲定顺序
+
+```bash
+fsca cluster check
+fsca cluster auto --dry-run
+fsca cluster auto
+fsca cluster graph
+```
+
+顺序说明：
+- `check`：先发现 ID 冲突、注解缺失、环依赖问题。
+- `dry-run`：只看计划，不做链上写操作。
+- `auto`：正式执行 deploy/link/mount。
+- `graph`：最终验证拓扑是否符合设计。
+
+### 13.3 生产建议
+
+- PR 阶段必须附 `cluster check` 和 `cluster auto --dry-run` 输出。
+- 生产变更窗口执行 `cluster auto` 前，先冻结 `project.json` 快照。
+- 出现函数级环告警时，先修业务调用路径，再执行正式装配。
+- 自动装配后至少回归：`cluster list mounted`、`cluster info <id>`、`cluster graph`。
