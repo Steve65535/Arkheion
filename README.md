@@ -214,11 +214,13 @@ fsca cluster upgrade --id 2 --contract PriceOracleV2
 
 ### Multi-Sig Governance
 ```bash
-fsca wallet submit --to 0xCluster... --data 0x...
-fsca wallet confirm 0
-fsca wallet execute 0
+fsca wallet submit --to 0xCluster... --data 0x... --yes
+fsca wallet confirm 0 --yes
+fsca wallet execute 0 --yes
 ```
 - ✅ Every topology mutation requires threshold signatures
+- ✅ All invasive wallet commands prompt for confirmation — use `--yes` in CI
+- ✅ `wallet list` / `wallet info` show **live valid confirmations** (accurate after owner removal)
 - ✅ Built-in proposal system (add/remove owners, change threshold)
 - ✅ DAO-ready from day one
 
@@ -274,9 +276,16 @@ No address spoofing. No unauthorized access. No exceptions.
 | `fsca cluster info <id>` | Inspect a contract's metadata |
 | `fsca cluster choose <addr>` | Set working context |
 | `fsca cluster operator add/remove <addr>` | Manage cluster operators |
-| `fsca wallet submit/confirm/execute/revoke` | Multi-sig transaction lifecycle (`--yes` to skip confirmation) |
+| `fsca wallet submit --to <addr> --data <hex> [--yes]` | Submit a transaction (confirmation required) |
+| `fsca wallet confirm <txIndex> [--yes]` | Confirm a transaction (confirmation required) |
+| `fsca wallet execute <txIndex> [--yes]` | Execute a transaction (confirmation required) |
+| `fsca wallet revoke <txIndex> [--yes]` | Revoke a confirmation (confirmation required) |
+| `fsca wallet list [--pending]` | List transactions with **live valid-confirmation counts** |
+| `fsca wallet info <txIndex>` | View transaction details with live confirmation count |
 | `fsca wallet owners` | View signers & threshold |
-| `fsca wallet propose add-owner/remove-owner/change-threshold` | Governance proposals (`--yes` to skip confirmation) |
+| `fsca wallet propose add-owner <addr> [--yes]` | Propose adding an owner (confirmation required) |
+| `fsca wallet propose remove-owner <addr> [--yes]` | Propose removing an owner (confirmation required) |
+| `fsca wallet propose change-threshold <N> [--yes]` | Propose threshold change (confirmation required) |
 | `fsca normal right set/remove` | ABI-level permission control |
 | `fsca normal get modules <type>` | Query linked modules |
 
@@ -306,7 +315,7 @@ Total Lines of Code:   8,500+
   Solidity:            1,175  (4 core contracts)
   JavaScript:          5,200+ (20 CLI commands + auto-assembly subsystem)
   Documentation:       1,800+
-  Tests:               312 unit tests (Jest, all passing)
+  Tests:               325 unit tests (Jest, all passing)
 ```
 
 ---

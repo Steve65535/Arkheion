@@ -222,6 +222,7 @@ fsca cluster rollback --id <id> --generation <n> --yes
 - `fsca deploy` 依赖 `fsca.clusterAddress`，通常要先 `fsca cluster init`。
 - `fsca cluster choose` 会扫描注册表进行状态检查，注册量大时耗时会上升。
 - `project.json` 是状态真源之一，建议纳入版本管理策略并做变更审计。
+- **`contractId: null` 与 `@fsca-id 0`**：基础设施合约（MultiSigWallet、ClusterManager 等）内部使用 `contractId: null`。CLI 在所有数值比较中均对 `null` 做了防护，因此 `@fsca-id 0` 可安全用于业务合约。如果本地 `project.json` 中存在旧版遗留的基础设施记录在 `runningcontracts` 中，请运行 `fsca cluster auto check` 确认无冲突。
 
 ## 9. 生产落地模板（可直接套用）
 

@@ -213,11 +213,13 @@ fsca cluster upgrade --id 2 --contract PriceOracleV2
 
 ### 多签治理
 ```bash
-fsca wallet submit --to 0xCluster... --data 0x...
-fsca wallet confirm 0
-fsca wallet execute 0
+fsca wallet submit --to 0xCluster... --data 0x... --yes
+fsca wallet confirm 0 --yes
+fsca wallet execute 0 --yes
 ```
 - ✅ 所有拓扑变更必须通过阈值签名
+- ✅ 所有侵入式钱包命令执行前均需确认 —— CI 中使用 `--yes` 跳过
+- ✅ `wallet list` / `wallet info` 显示**实时有效确认数**（移除所有者后仍准确）
 - ✅ 内置提案系统（增减签名者、修改阈值）
 - ✅ 从第一天起即满足 DAO 标准
 
@@ -273,9 +275,16 @@ Pod A 调用 Pod B
 | `fsca cluster info <id>` | 查看合约元数据 |
 | `fsca cluster choose <addr>` | 设置工作上下文 |
 | `fsca cluster operator add/remove <addr>` | 管理集群操作员 |
-| `fsca wallet submit/confirm/execute/revoke` | 多签交易生命周期（`--yes` 跳过确认） |
+| `fsca wallet submit --to <addr> --data <hex> [--yes]` | 提交交易（需确认） |
+| `fsca wallet confirm <txIndex> [--yes]` | 确认交易（需确认） |
+| `fsca wallet execute <txIndex> [--yes]` | 执行交易（需确认） |
+| `fsca wallet revoke <txIndex> [--yes]` | 撤销确认（需确认） |
+| `fsca wallet list [--pending]` | 列出交易，显示**实时有效确认数** |
+| `fsca wallet info <txIndex>` | 查看交易详情，显示实时确认数 |
 | `fsca wallet owners` | 查看签名者与阈值 |
-| `fsca wallet propose add-owner/remove-owner/change-threshold` | 治理提案（`--yes` 跳过确认） |
+| `fsca wallet propose add-owner <addr> [--yes]` | 提议添加所有者（需确认） |
+| `fsca wallet propose remove-owner <addr> [--yes]` | 提议移除所有者（需确认） |
+| `fsca wallet propose change-threshold <N> [--yes]` | 提议修改阈值（需确认） |
 | `fsca normal right set/remove` | ABI 级权限控制 |
 | `fsca normal get modules <type>` | 查询已链接模块 |
 
@@ -305,7 +314,7 @@ Pod A 调用 Pod B
   Solidity:    1,175  (4 个核心合约)
   JavaScript:  5,200+ (20 条 CLI 命令 + 自动装配子系统)
   文档:        1,800+
-  测试:        312 单元测试（Jest，全部通过）
+  测试:        325 单元测试（Jest，全部通过）
 ```
 
 ---
