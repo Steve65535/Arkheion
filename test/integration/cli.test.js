@@ -4,14 +4,16 @@
  */
 const { execSync, spawnSync } = require('child_process');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 const CLI = path.join(__dirname, '../../cli/index.js');
 
-function runCLI(args = [], env = {}) {
+function runCLI(args = [], env = {}, cwd = undefined) {
   const result = spawnSync(process.execPath, [CLI, ...args], {
     encoding: 'utf8',
     env: { ...process.env, ...env },
-    cwd: path.join(__dirname, '../../')
+    cwd: cwd || path.join(__dirname, '../../')
   });
   return {
     stdout: result.stdout || '',
@@ -101,6 +103,47 @@ describe('CLI 集成测试', () => {
     it('wallet propose add-owner 路由正确', () => {
       const r = runCLI(['wallet', 'propose', 'add-owner', '--address', '0x0']);
       expect(r.stdout).toContain('wallet propose add-owner');
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // 前置校验 (preflight) — child-process 级退出码断言
+  // ──────────────────────────────────────────────
+  describe('preflight prerequisite enforcement', () => {
+    let emptyDir;
+
+    beforeAll(() => {
+      emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cli-preflight-'));
+    });
+
+    afterAll(() => {
+      fs.rmSync(emptyDir, { recursive: true, force: true });
+    });
+
+    it('deploy before init → exit code 1', () => {
+      const r = runCLI(['deploy', '--contract', 'Foo'], {}, emptyDir);
+      expect(r.code).toBe(1);
+      expect(r.stderr).toMatch(/fsca init/);
+    });
+
+    it('cluster init before init → exit code 1', () => {
+      const r = runCLI(['cluster', 'init'], {}, emptyDir);
+      expect(r.code).toBe(1);
+      expect(r.stderr).toMatch(/fsca init/);
+    });
+
+    it('cluster mount before cluster init → exit code 1', () => {
+      const projPath = path.join(emptyDir, 'project.json');
+      fs.writeFileSync(projPath, JSON.stringify({
+        network: { rpc: 'http://localhost' },
+        account: { address: '0x1' }
+      }));
+
+      const r = runCLI(['cluster', 'mount', '1', 'Test'], {}, emptyDir);
+      expect(r.code).toBe(1);
+      expect(r.stderr).toMatch(/fsca cluster init/);
+
+      fs.unlinkSync(projPath);
     });
   });
 });

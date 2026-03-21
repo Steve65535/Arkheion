@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 
 const logger = require('../libs/logger');
+const { assertPrerequisites } = require('../libs/commands/preflight');
 
 class CommandExecutor {
   constructor(handlersDir = path.join(__dirname, '../libs')) {
@@ -44,6 +45,16 @@ class CommandExecutor {
         .map(([k, v]) => `--${k}=${SENSITIVE.has(k) ? '[REDACTED]' : v}`)
         .join(' ');
       logger.logInput(inputStr);
+    }
+
+    // Preflight prerequisite check
+    const requires = parsedCommand.config && parsedCommand.config.requires;
+    if (requires && requires.length > 0) {
+      const check = assertPrerequisites(rootDir, requires);
+      if (!check.ok) {
+        console.error(check.message);
+        process.exit(1);
+      }
     }
 
     try {

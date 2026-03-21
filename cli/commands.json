@@ -9,6 +9,7 @@
     "deploy": {
       "description": "部署继承自 NormalTemplate 的业务合约",
       "handler": "./libs/commands/deploy",
+      "requires": ["initialized"],
       "usage": "fsca deploy --contract <ContractName> [--description <name>] [--cleanup <keep|soft|hard>] [--yes]",
       "params": {
         "contract": {
@@ -76,6 +77,7 @@
         "submit": {
           "description": "提交新交易到多签钱包",
           "handler": "./libs/commands/wallet/submit",
+          "requires": ["cluster_ready"],
           "usage": "fsca wallet submit --to <address> --value <amount> --data <hex> [--yes]",
           "params": {
             "to": {
@@ -103,6 +105,7 @@
         "confirm": {
           "description": "确认待处理的交易",
           "handler": "./libs/commands/wallet/confirm",
+          "requires": ["cluster_ready"],
           "usage": "fsca wallet confirm <txIndex> [--yes]",
           "params": {
             "txIndex": {
@@ -120,6 +123,7 @@
         "execute": {
           "description": "执行已达到阈值的交易",
           "handler": "./libs/commands/wallet/execute",
+          "requires": ["cluster_ready"],
           "usage": "fsca wallet execute <txIndex> [--yes]",
           "params": {
             "txIndex": {
@@ -137,6 +141,7 @@
         "revoke": {
           "description": "撤销之前的确认",
           "handler": "./libs/commands/wallet/revoke",
+          "requires": ["cluster_ready"],
           "usage": "fsca wallet revoke <txIndex> [--yes]",
           "params": {
             "txIndex": {
@@ -154,6 +159,7 @@
         "list": {
           "description": "列出所有交易",
           "handler": "./libs/commands/wallet/list",
+          "requires": ["cluster_ready"],
           "usage": "fsca wallet list [--pending]",
           "params": {
             "pending": {
@@ -166,6 +172,7 @@
         "info": {
           "description": "查看交易详情",
           "handler": "./libs/commands/wallet/info",
+          "requires": ["cluster_ready"],
           "usage": "fsca wallet info <txIndex>",
           "params": {
             "txIndex": {
@@ -178,6 +185,7 @@
         "owners": {
           "description": "查看所有所有者和阈值",
           "handler": "./libs/commands/wallet/owners",
+          "requires": ["cluster_ready"],
           "usage": "fsca wallet owners"
         },
         "propose": {
@@ -186,6 +194,7 @@
             "add-owner": {
               "description": "提议添加新所有者",
               "handler": "./libs/commands/wallet/propose",
+              "requires": ["cluster_ready"],
               "usage": "fsca wallet propose add-owner <address> [--yes]",
               "params": {
                 "address": {
@@ -203,6 +212,7 @@
             "remove-owner": {
               "description": "提议移除所有者",
               "handler": "./libs/commands/wallet/propose",
+              "requires": ["cluster_ready"],
               "usage": "fsca wallet propose remove-owner <address> [--yes]",
               "params": {
                 "address": {
@@ -220,6 +230,7 @@
             "change-threshold": {
               "description": "提议修改确认阈值",
               "handler": "./libs/commands/wallet/propose",
+              "requires": ["cluster_ready"],
               "usage": "fsca wallet propose change-threshold <threshold> [--yes]",
               "params": {
                 "threshold": {
@@ -244,6 +255,7 @@
         "init": {
           "description": "部署 FSCA 集群",
           "handler": "./libs/commands/cluster/init",
+          "requires": ["initialized"],
           "usage": "fsca cluster init [--threshold <num>] [--cleanup <keep|soft|hard>] [--yes]",
           "params": {
             "threshold": {
@@ -266,6 +278,7 @@
         "graph": {
           "description": "生成集群拓扑图 (Mermaid)",
           "handler": "./libs/commands/cluster/graph",
+          "requires": ["cluster_ready"],
           "usage": "fsca cluster graph"
         },
         "list": {
@@ -274,11 +287,13 @@
             "mounted": {
               "description": "列举已挂载的合约",
               "handler": "./libs/commands/cluster/list",
+              "requires": ["cluster_ready"],
               "usage": "fsca cluster list mounted"
             },
             "all": {
               "description": "列举所有合约（包括已删除的）",
               "handler": "./libs/commands/cluster/list",
+              "requires": ["cluster_ready"],
               "usage": "fsca cluster list all"
             }
           }
@@ -286,6 +301,7 @@
         "info": {
           "description": "查询集群合约详情 (by ID)",
           "handler": "./libs/commands/cluster/info",
+          "requires": ["cluster_ready"],
           "usage": "fsca cluster info <id>",
           "params": {
             "id": {
@@ -298,6 +314,7 @@
         "current": {
           "description": "显示当前操作的合约信息",
           "handler": "./libs/commands/cluster/current",
+          "requires": ["cluster_ready"],
           "usage": "fsca cluster current"
         },
         "operator": {
@@ -306,11 +323,13 @@
             "list": {
               "description": "列出所有 Operator",
               "handler": "./libs/commands/cluster/operator",
+              "requires": ["cluster_ready"],
               "usage": "fsca cluster operator list"
             },
             "add": {
               "description": "添加 Operator",
               "handler": "./libs/commands/cluster/operator",
+              "requires": ["cluster_ready"],
               "usage": "fsca cluster operator add <address>",
               "params": {
                 "address": {
@@ -323,6 +342,7 @@
             "remove": {
               "description": "移除 Operator",
               "handler": "./libs/commands/cluster/operator",
+              "requires": ["cluster_ready"],
               "usage": "fsca cluster operator remove <address>",
               "params": {
                 "address": {
@@ -337,6 +357,7 @@
         "choose": {
           "description": "选择当前操作的合约",
           "handler": "./libs/commands/cluster/choose",
+          "requires": ["cluster_ready"],
           "usage": "fsca cluster choose <address>",
           "params": {
             "address": {
@@ -349,6 +370,7 @@
         "link": {
           "description": "链接合约(仅未挂载时可用)",
           "handler": "./libs/commands/cluster/link",
+          "requires": ["cluster_ready", "current_contract_selected"],
           "usage": "fsca cluster link <type> <targetAddress> <targetId>",
           "params": {
             "type": {
@@ -371,6 +393,7 @@
         "unlink": {
           "description": "解除合约链接 (需要合约已挂载)",
           "handler": "./libs/commands/cluster/unlink",
+          "requires": ["cluster_ready", "current_contract_selected"],
           "usage": "fsca cluster unlink <type> <targetAddress> <targetId>",
           "params": {
             "type": {
@@ -393,6 +416,7 @@
         "mount": {
           "description": "将当前合约挂载到集群",
           "handler": "./libs/commands/cluster/mount",
+          "requires": ["cluster_ready", "current_contract_selected"],
           "usage": "fsca cluster mount <id> <name>",
           "params": {
             "id": {
@@ -410,6 +434,7 @@
         "unmount": {
           "description": "从集群卸载合约",
           "handler": "./libs/commands/cluster/unmount",
+          "requires": ["cluster_ready"],
           "usage": "fsca cluster unmount <id>",
           "params": {
             "id": {
@@ -422,6 +447,7 @@
         "upgrade": {
           "description": "热替换集群中的合约 (下架旧合约, 部署并上线新合约)",
           "handler": "./libs/commands/cluster/upgrade",
+          "requires": ["cluster_ready"],
           "usage": "fsca cluster upgrade --id <id> --contract <ContractName> [--skip-copy-pods] [--cleanup <keep|soft|hard>] [--yes] [--resume] [--restart]",
           "params": {
             "id": {
@@ -464,6 +490,7 @@
         "auto": {
           "description": "自动装配集群合约 (扫描源码注解, 解析依赖, 自动部署/链接/挂载)",
           "handler": "./libs/commands/cluster/auto",
+          "requires": ["cluster_ready"],
           "usage": "fsca cluster auto [--dry-run] [--cleanup <keep|soft|hard>] [--yes] [--resume] [--restart]",
           "params": {
             "dry-run": {
@@ -496,11 +523,13 @@
         "check": {
           "description": "静态检查集群注解 (ID 冲突 / pod 环 / 函数调用环，不执行链上操作)",
           "handler": "./libs/commands/cluster/check",
+          "requires": ["initialized"],
           "usage": "fsca cluster check"
         },
         "rollback": {
           "description": "回滚合约到指定历史版本",
           "handler": "./libs/commands/cluster/rollback",
+          "requires": ["cluster_ready"],
           "usage": "fsca cluster rollback --id <contractId> [--generation <n>] [--dry-run] [--yes]",
           "params": {
             "id": {
@@ -528,6 +557,7 @@
         "history": {
           "description": "查看合约版本历史",
           "handler": "./libs/commands/cluster/history",
+          "requires": ["cluster_ready"],
           "usage": "fsca cluster history --id <contractId>",
           "params": {
             "id": {
@@ -548,6 +578,7 @@
             "set": {
               "description": "设置 ABI 权限等级",
               "handler": "./libs/commands/normal/right",
+              "requires": ["cluster_ready", "current_contract_selected"],
               "usage": "fsca normal right set <abiId> <maxRight>",
               "params": {
                 "abiId": {
@@ -565,6 +596,7 @@
             "remove": {
               "description": "移除 ABI 权限",
               "handler": "./libs/commands/normal/right",
+              "requires": ["cluster_ready", "current_contract_selected"],
               "usage": "fsca normal right remove <abiId>",
               "params": {
                 "abiId": {
@@ -582,6 +614,7 @@
             "modules": {
               "description": "获取已链接的模块",
               "handler": "./libs/commands/normal/get",
+              "requires": ["cluster_ready", "current_contract_selected"],
               "usage": "fsca normal get modules <type>",
               "params": {
                 "type": {
