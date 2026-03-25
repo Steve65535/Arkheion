@@ -223,6 +223,26 @@ afterEach(() => {
 });
 
 describe('auto podSnapshot sync — real auto.js code path', () => {
+    it('dry-run prints plan and does not mutate project.json or write checkpoint/report', async () => {
+        const dir = makeTmpDir();
+        const original = baseProject([
+            { name: 'LendingEngine', address: '0xLending', contractId: null, generation: null, deploySeq: 1, status: 'deployed', timeStamp: 1000, deployTx: null, podSnapshot: { active: [], passive: [] } },
+        ]);
+        writeProjectJson(dir, original);
+
+        setupAnalyze({ contractName: 'LendingEngine', fscaId: 210 });
+        setupReconcile(210, 'LendingEngine', '0xLending');
+
+        const before = fs.readFileSync(path.join(dir, 'project.json'), 'utf-8');
+        const auto = require('../../libs/commands/cluster/auto');
+        await auto({ rootDir: dir, args: { 'dry-run': true } });
+        const after = fs.readFileSync(path.join(dir, 'project.json'), 'utf-8');
+
+        expect(after).toBe(before);
+        expect(fs.existsSync(path.join(dir, 'auto-checkpoint.json'))).toBe(false);
+        expect(fs.existsSync(path.join(dir, 'auto-report.json'))).toBe(false);
+    });
+
     it('writes non-empty podSnapshot to project.json after mount', async () => {
         const dir = makeTmpDir();
         const contractAddr = '0xLending';

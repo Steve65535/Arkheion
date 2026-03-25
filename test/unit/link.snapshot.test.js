@@ -208,6 +208,33 @@ describe('link podSnapshot sync — real link.js code path', () => {
 // ─── unlink.js tests ──────────────────────────────────────────────────────────
 
 describe('unlink podSnapshot sync — real unlink.js code path', () => {
+    it('routes to beforeMount unlink path when contract is not mounted', async () => {
+        const dir = makeTmpDir();
+        writeClusterArtifact(dir);
+        const config = baseProject(CONTRACT_ADDR, [
+            { name: 'LendingEngine', address: CONTRACT_ADDR, contractId: 210, status: 'deployed', podSnapshot: { active: [{ contractId: 110 }], passive: [] } },
+        ]);
+        writeProjectJson(dir, config);
+
+        const removeActivePodBeforeMount = jest.fn(async () => {});
+        const removeActivePodAfterMount = jest.fn(async () => {});
+        mockContractInstances.set(CONTRACT_ADDR.toLowerCase(), {
+            whetherMounted: async () => 0,
+            getAllActiveModules: async () => [],
+            getAllPassiveModules: async () => [],
+        });
+        mockContractInstances.set(config.fsca.clusterAddress.toLowerCase(), {
+            removeActivePodBeforeMount,
+            removeActivePodAfterMount,
+        });
+
+        const unlink = require('../../libs/commands/cluster/unlink');
+        await unlink({ rootDir: dir, args: { type: 'active', targetAddress: TARGET_ADDR, targetId: '110' } });
+
+        expect(removeActivePodBeforeMount).toHaveBeenCalled();
+        expect(removeActivePodAfterMount).not.toHaveBeenCalled();
+    });
+
     it('writes updated podSnapshot after active unlink', async () => {
         const dir = makeTmpDir();
         writeClusterArtifact(dir);

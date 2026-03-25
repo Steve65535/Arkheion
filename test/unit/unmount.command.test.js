@@ -1,0 +1,107 @@
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const ethers = require('ethers');
+
+function makeTmpDir() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'fsca-unmount-test-'));
+}
+
+function writeProjectJson(dir, data) {
+  fs.writeFileSync(path.join(dir, 'project.json'), JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function readProjectJson(dir) {
+  return JSON.parse(fs.readFileSync(path.join(dir, 'project.json'), 'utf-8'));
+}
+
+function writeClusterArtifact(dir) {
+  const artifactDir = path.join(dir, 'artifacts', 'contracts', 'undeployed', 'structure', 'clustermanager.sol');
+  fs.mkdirSync(artifactDir, { recursive: true });
+  fs.writeFileSync(path.join(artifactDir, 'ClusterManager.json'), JSON.stringify({
+    abi: [{ type: 'function', name: 'deleteContract', inputs: [{ type: 'uint32' }], outputs: [] }],
+  }), 'utf-8');
+}
+
+function baseProject() {
+  return {
+    network: { rpc: 'http://127.0.0.1:8545' },
+    account: { privateKey: '0x' + 'a'.repeat(64) },
+    fsca: {
+      clusterAddress: '0x' + '1'.repeat(40),
+      currentOperating: '0x' + 'b'.repeat(40),
+      runningcontracts: [
+        { name: 'SwapEngine', address: '0x' + 'b'.repeat(40), contractId: 200, timeStamp: 1000 },
+      ],
+      unmountedcontracts: [],
+    },
+  };
+}
+
+jest.mock('../../chain/provider', () => ({ getProvider: jest.fn(() => ({})) }));
+jest.mock('../../wallet/signer', () => ({ getSigner: jest.fn(() => ({})) }));
+
+const contractStub = {
+  deleteContract: jest.fn(),
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  jest.spyOn(process, 'exit').mockImplementation((code) => {
+    throw new Error(`process.exit:${code}`);
+  });
+
+  contractStub.deleteContract.mockResolvedValue({
+    hash: '0xTxHash',
+    wait: jest.fn().mockResolvedValue({}),
+  });
+  jest.spyOn(ethers, 'Contract').mockImplementation(() => contractStub);
+  jest.spyOn(ethers.ethers, 'Contract').mockImplementation(() => contractStub);
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+describe('unmount command — real unmount.js path', () => {
+  it('moves running contract to unmounted and clears contractId', async () => {
+    const dir = makeTmpDir();
+    writeClusterArtifact(dir);
+    writeProjectJson(dir, baseProject());
+
+    const unmount = require('../../libs/commands/cluster/unmount');
+    await unmount({ rootDir: dir, args: { id: '200' } });
+
+    const updated = readProjectJson(dir);
+    expect(updated.fsca.runningcontracts).toEqual([]);
+    expect(updated.fsca.unmountedcontracts).toEqual([
+      expect.objectContaining({
+        name: 'SwapEngine',
+        address: '0x' + 'b'.repeat(40),
+        contractId: null,
+        timeStamp: 1000,
+      }),
+    ]);
+    expect(contractStub.deleteContract).toHaveBeenCalledWith('200');
+  });
+
+  it('keeps cache stable and warns when on-chain unmount succeeds but running cache misses', async () => {
+    const dir = makeTmpDir();
+    writeClusterArtifact(dir);
+    const config = baseProject();
+    config.fsca.runningcontracts = [];
+    config.fsca.unmountedcontracts = [{ name: 'Old', address: '0x' + 'c'.repeat(40), contractId: null }];
+    writeProjectJson(dir, config);
+
+    const unmount = require('../../libs/commands/cluster/unmount');
+    await unmount({ rootDir: dir, args: { id: '200' } });
+
+    const updated = readProjectJson(dir);
+    expect(updated.fsca.runningcontracts).toEqual([]);
+    expect(updated.fsca.unmountedcontracts).toEqual([{ name: 'Old', address: '0x' + 'c'.repeat(40), contractId: null }]);
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("not found in local 'runningcontracts' cache."));
+  });
+});

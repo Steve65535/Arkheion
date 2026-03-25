@@ -117,6 +117,42 @@ function writeClusterArtifact(dir) {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('mount podSnapshot sync — real mount.js code path', () => {
+    it('rejects mounting a deprecated contract address', async () => {
+        const dir = makeTmpDir();
+        writeClusterArtifact(dir);
+
+        const contractAddr = '0xContract';
+        const config = baseProject([
+            { name: 'LegacyEngine', address: contractAddr, contractId: 210, generation: 1, deploySeq: 1, status: 'deprecated', timeStamp: 1000, deployTx: null, podSnapshot: { active: [], passive: [] } },
+        ]);
+        config.fsca.currentOperating = contractAddr;
+        config.fsca.unmountedcontracts = [{ name: 'LegacyEngine', address: contractAddr, contractId: null }];
+        writeProjectJson(dir, config);
+
+        const exitSpy = jest.spyOn(process, 'exit').mockImplementation((code) => { throw new Error(`process.exit:${code}`); });
+        const mount = require('../../libs/commands/cluster/mount');
+        await expect(mount({ rootDir: dir, args: { id: '210', name: 'LegacyEngine' } })).rejects.toThrow('process.exit:1');
+        expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('rejects mounting an archived contract address', async () => {
+        const dir = makeTmpDir();
+        writeClusterArtifact(dir);
+
+        const contractAddr = '0xContract';
+        const config = baseProject([
+            { name: 'ArchivedEngine', address: contractAddr, contractId: 210, generation: 1, deploySeq: 1, status: 'archived', timeStamp: 1000, deployTx: null, podSnapshot: { active: [], passive: [] } },
+        ]);
+        config.fsca.currentOperating = contractAddr;
+        config.fsca.unmountedcontracts = [{ name: 'ArchivedEngine', address: contractAddr, contractId: null }];
+        writeProjectJson(dir, config);
+
+        const exitSpy = jest.spyOn(process, 'exit').mockImplementation((code) => { throw new Error(`process.exit:${code}`); });
+        const mount = require('../../libs/commands/cluster/mount');
+        await expect(mount({ rootDir: dir, args: { id: '210', name: 'ArchivedEngine' } })).rejects.toThrow('process.exit:1');
+        expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+
     it('writes non-empty podSnapshot after mount', async () => {
         const dir = makeTmpDir();
         writeClusterArtifact(dir);
